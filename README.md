@@ -1,7 +1,7 @@
-OpenStack Folsom bootstrap script
+OpenStack Folsom Deploy Script
 =======================
 
-OpenStack Folsom bootstrap script for Ubuntu Server 12.04 LTS.
+OpenStack Folsom (2012.2) bootstrap script for Ubuntu Server 12.04 LTS.
 
 Author
 ----
