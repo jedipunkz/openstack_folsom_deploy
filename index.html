@@ -109,17 +109,10 @@ openvswitch will adding eth0 and eth1 for bridge interfaces.</p>
 
 <h2>How to use</h2>
 
-<p>Update these environment on set_env() function.</p>
+<p>Update these environment on deploy.conf.</p>
 
 <pre><code># for all in one
 HOST_IP='192.168.0.8'
-# for separated nodes (in near future, these env will be usefull)
-NOVA_IP='192.168.0.8'
-GLANCE_IP='192.168.0.8'
-KEYSTONE_IP='192.168.0.8'
-CINDER_IP='192.168.0.8'
-DB_IP='192.168.0.8'
-QUANTUM_IP='192.168.0.8'
 # etc env
 MYSQL_PASS='secret'
 CINDER_VOLUME='/dev/sda6'
@@ -139,7 +132,7 @@ EXT_NET_RANGE='10.200.8.0/24'
 
 <pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 % cd openstack_folsom_deploy
-% ./deploy allinone
+% ./deploy.sh allinone
 </code></pre>
 
 <p>That's all. :D</p>
