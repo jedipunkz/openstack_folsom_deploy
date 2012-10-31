@@ -80,7 +80,7 @@ and Especialy you need to have a disk device for cinder such as /dev/sda6.
 How to use
 ----
 
-Update these environment on deploy.conf.
+#### Update these environment on deploy.conf.
 
     # for all in one
     HOST_IP='192.168.0.8'
@@ -100,25 +100,25 @@ Update these environment on deploy.conf.
 
 Meaning of these parameters are ...
 
-$HOST_IP         : Target Host's IP addr (all in one)
-$MYSQL_PASS      : MySQL's root password
-$CINDER_VOLUME   : disk device name for cinder
-$DATA_NIC        : name of NIC for VM (Data) Segment
-$PUBLIC_NIC      : name of NIC for Public Segment
-$INT_NET_GATEWAY : Quantum's internal network's gateway
-$INT_NET_RANGE   : Quantum's internal network's range
-$EXT_NET_GATEWAY : Quantum's external network's gateway
-$EXT_NET_START   : Quantum's external network's starting addr
-$EXT_NET_END     : Quantum's external network's ending addr
-$EXT_NET_RANGE   : Quantum's external network's range
+    $HOST_IP         : Target Host's IP addr (all in one)
+    $MYSQL_PASS      : MySQL's root password
+    $CINDER_VOLUME   : disk device name for cinder
+    $DATA_NIC        : name of NIC for VM (Data) Segment
+    $PUBLIC_NIC      : name of NIC for Public Segment
+    $INT_NET_GATEWAY : Quantum's internal network's gateway
+    $INT_NET_RANGE   : Quantum's internal network's range
+    $EXT_NET_GATEWAY : Quantum's external network's gateway
+    $EXT_NET_START   : Quantum's external network's starting addr
+    $EXT_NET_END     : Quantum's external network's ending addr
+    $EXT_NET_RANGE   : Quantum's external network's range
 
-Run this script.
+#### Run this script.
 
     % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 	% cd openstack_folsom_deploy
 	% ./deploy.sh allinone
 
-That's all. :D
+You've done :D
 
 Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .
 
