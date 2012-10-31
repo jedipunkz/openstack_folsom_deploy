@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # allright reserved by Tomokazu Hirai @jedipunkz
 # KDDI Web Communications Inc.
 #
@@ -10,35 +10,37 @@
 
 set -ex
 
+source ./deploy.conf
+
 # --------------------------------------------------------------------------------------
 # set environment
 # --------------------------------------------------------------------------------------
-function set_env() {
-    BASE_DIR=`pwd`
-    
-    # for all in one
-    HOST_IP='192.168.0.8'
-    # for separated nodes
-    NOVA_IP='192.168.0.8'
-    GLANCE_IP='192.168.0.8'
-    KEYSTONE_IP='192.168.0.8'
-    CINDER_IP='192.168.0.8'
-    DB_IP='192.168.0.8'
-    QUANTUM_IP='192.168.0.8'
-    # etc env
-    MYSQL_PASS='secret'
-    CINDER_VOLUME='/dev/sda6'
-    DATA_NIC='eth1'
-    PUBLIC_NIC='eth0'
-    
-    # quantun env
-    INT_NET_GATEWAY='172.24.17.254'
-    INT_NET_RANGE='172.24.17.0/24'
-    EXT_NET_GATEWAY='10.200.8.1'
-    EXT_NET_START='10.200.8.36'
-    EXT_NET_END='10.200.8.40'
-    EXT_NET_RANGE='10.200.8.0/24'
-}
+#function set_env() {
+#    BASE_DIR=`pwd`
+#    
+#    # for all in one
+#    HOST_IP='192.168.0.8'
+#    # for separated nodes (in near future, I support these parameters)
+#    #NOVA_IP='192.168.0.8'
+#    #GLANCE_IP='192.168.0.8'
+#    #KEYSTONE_IP='192.168.0.8'
+#    #CINDER_IP='192.168.0.8'
+#    #DB_IP='192.168.0.8'
+#    #QUANTUM_IP='192.168.0.8'
+#    # etc env
+#    MYSQL_PASS='secret'
+#    CINDER_VOLUME='/dev/sda6'
+#    DATA_NIC='eth1'
+#    PUBLIC_NIC='eth0'
+#    
+#    # quantun env
+#    INT_NET_GATEWAY='172.24.17.254'
+#    INT_NET_RANGE='172.24.17.0/24'
+#    EXT_NET_GATEWAY='10.200.8.1'
+#    EXT_NET_START='10.200.8.36'
+#    EXT_NET_END='10.200.8.40'
+#    EXT_NET_RANGE='10.200.8.0/24'
+#}
 
 # --------------------------------------------------------------------------------------
 # check environment
@@ -61,11 +63,71 @@ function check_env() {
 }
 
 # --------------------------------------------------------------------------------------
+# check os vendor
+# --------------------------------------------------------------------------------------
+function check_os() {
+    VENDOR=$(lsb_release -i -s)
+    export VENDER
+}
+
+# --------------------------------------------------------------------------------------
+# package installation function
+# --------------------------------------------------------------------------------------
+function install_package() {
+    apt-get -y install "$@"
+}
+
+# --------------------------------------------------------------------------------------
+# restart function
+# --------------------------------------------------------------------------------------
+function restart_service() {
+    check_os
+    if [[ "$VENDOR" = "Ubuntu" ]]; then
+        sudo /usr/bin/service $1 restart
+    elif [[ "$VENDOR" = "Debian" ]]; then
+        sudo /usr/sbin/service $1 restart
+    else
+        echo "We does not support your distribution."
+        exit 1
+    fi
+}
+
+# --------------------------------------------------------------------------------------
+# restart function
+# --------------------------------------------------------------------------------------
+function start_service() {
+    check_os
+    if [[ "$VENDOR" = "Ubuntu" ]]; then
+        sudo /usr/bin/service $1 start
+    elif [[ "$VENDOR" = "Debian" ]]; then
+        sudo /usr/sbin/service $1 start
+    else
+        echo "We does not support your distribution."
+        exit 1
+    fi
+}
+
+# --------------------------------------------------------------------------------------
+# stop function
+# --------------------------------------------------------------------------------------
+function stop_service() {
+    check_os
+    if [[ "$VENDOR" = "Ubuntu" ]]; then
+        sudo /usr/bin/service $1 stop
+    elif [[ "$VENDOR" = "Debian" ]]; then
+        sudo /usr/sbin/service $1 stop
+    else
+        echo "We does not support your distribution."
+        exit 1
+    fi
+}
+
+# --------------------------------------------------------------------------------------
 # initialize
 # --------------------------------------------------------------------------------------
 function init() {
     apt-get update
-    apt-get -y install ntp
+    install_package ntp
     cat <<EOF >/etc/ntp.conf
 server ntp.ubuntu.com
 server 127.127.1.0
@@ -117,24 +179,24 @@ function get_field() {
 function mysql_setup() {
     echo mysql-server-5.5 mysql-server/root_password password ${MYSQL_PASS} | debconf-set-selections
     echo mysql-server-5.5 mysql-server/root_password_again password ${MYSQL_PASS} | debconf-set-selections
-    apt-get -y install mysql-server python-mysqldb
+    install_package mysql-server python-mysqldb
     sed -i -e 's/127.0.0.1/0.0.0.0/' /etc/mysql/my.cnf
-    restart mysql
+    restart_service mysql
 }
 
 # --------------------------------------------------------------------------------------
 # install keystone
 # --------------------------------------------------------------------------------------
 function keystone_setup() {
-    apt-get -y install keystone python-keystone python-keystoneclient
+    install_package keystone python-keystone python-keystoneclient
     
     mysql -uroot -p${MYSQL_PASS} -e 'CREATE DATABASE keystone;'
     mysql -uroot -p${MYSQL_PASS} -e 'CREATE USER keystoneUser;'
     mysql -uroot -p${MYSQL_PASS} -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystoneUser'@'%';"
     mysql -uroot -p${MYSQL_PASS} -e "SET PASSWORD FOR 'keystoneUser'@'%' = PASSWORD('keystonePass');"
     
-    sed -e "s#<HOST>#${KEYSTONE_IP}#" $BASE_DIR/temp/etc.keystone/keystone.conf > /etc/keystone/keystone.conf
-    service keystone restart
+    sed -e "s#<HOST>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.keystone/keystone.conf > /etc/keystone/keystone.conf
+    restart_service keystone
     keystone-manage db_sync
     
     # Creating Tenants
@@ -215,16 +277,17 @@ function keystone_setup() {
 # install glance
 # --------------------------------------------------------------------------------------
 function glance_setup() {
-    #apt-get -y install glance glance-api glance-client glance-common glance-registry python-glance python-mysqldb python-keystone python-keystoneclient mysql-client python-glanceclient
-    apt-get -y install glance glance-api glance-common glance-registry python-glance python-mysqldb python-keystone python-keystoneclient mysql-client python-glanceclient
+    #install_package glance glance-api glance-client glance-common glance-registry python-glance python-mysqldb python-keystone python-keystoneclient mysql-client python-glanceclient
+    install_package glance glance-api glance-common glance-registry python-glance python-mysqldb python-keystone python-keystoneclient mysql-client python-glanceclient
     
     mysql -uroot -p${MYSQL_PASS} -e "CREATE DATABASE glance;"
     mysql -uroot -p${MYSQL_PASS} -e "GRANT ALL ON glance.* TO 'glanceUser'@'%' IDENTIFIED BY 'glancePass';"
     
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/temp/etc.glance/glance-api.conf > /etc/glance/glance-api.conf
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/temp/etc.glance/glance-registry.conf > /etc/glance/glance-registry.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.glance/glance-api.conf > /etc/glance/glance-api.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.glance/glance-registry.conf > /etc/glance/glance-registry.conf
     
-    service glance-registry restart; service glance-api restart
+    restart_service glance-registry
+    restart_service glance-api
     glance-manage db_sync
 
     # install cirros 0.3.0 x86_64 os image
@@ -236,7 +299,7 @@ function glance_setup() {
 # install openvswitch
 # --------------------------------------------------------------------------------------
 function openvswitch_setup() {
-    apt-get -y install openvswitch-switch openvswitch-datapath-dkms
+    install_package openvswitch-switch openvswitch-datapath-dkms
     ovs-vsctl add-br br-int
     ovs-vsctl add-br br-eth1
     ovs-vsctl add-port br-eth1 ${DATA_NIC}
@@ -248,18 +311,18 @@ function openvswitch_setup() {
 # install quantum
 # --------------------------------------------------------------------------------------
 quantum_setup() {
-    apt-get -y install quantum-server python-cliff python-pyparsing quantum-plugin-openvswitch quantum-plugin-openvswitch-agent quantum-dhcp-agent quantum-l3-agent
+    install_package quantum-server python-cliff python-pyparsing quantum-plugin-openvswitch quantum-plugin-openvswitch-agent quantum-dhcp-agent quantum-l3-agent
     mysql -u root -p${MYSQL_PASS} -e "CREATE DATABASE quantum;"
     mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON quantum.* TO 'quantumUser'@'%' IDENTIFIED BY 'quantumPass';"
     
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/temp/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/temp/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
-    sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/temp/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
+    sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
     
-    service quantum-server restart
-    service quantum-plugin-openvswitch-agent restart
-    service quantum-dhcp-agent restart
-    service quantum-l3-agent restart
+    restart_service quantum-server
+    restart_service quantum-plugin-openvswitch-agent
+    restart_service quantum-dhcp-agent
+    restart_service quantum-l3-agent
 }
 
 # --------------------------------------------------------------------------------------
@@ -283,17 +346,17 @@ function create_network() {
 # install nova
 # --------------------------------------------------------------------------------------
 function nova_setup() {
-    apt-get -y install kvm libvirt-bin pm-utils
+    install_package kvm libvirt-bin pm-utils
     virsh net-destroy default
     virsh net-undefine default
-    service libvirt-bin restart
+    restart_service libvirt-bin
     
-    apt-get -y install nova-api nova-cert nova-common novnc nova-compute-kvm nova-consoleauth nova-scheduler nova-novncproxy rabbitmq-server vlan bridge-utils
+    install_package nova-api nova-cert nova-common novnc nova-compute-kvm nova-consoleauth nova-scheduler nova-novncproxy rabbitmq-server vlan bridge-utils
     mysql -u root -p${MYSQL_PASS} -e "CREATE DATABASE nova;"
     mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON nova.* TO 'novaUser'@'%' IDENTIFIED BY 'novaPass';"
     
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/temp/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/temp/etc.nova/nova.conf > /etc/nova/nova.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
     
     chown -R nova. /etc/nova
     chmod 644 /etc/nova/nova.conf
@@ -306,27 +369,27 @@ function nova_setup() {
 # install cinder
 # --------------------------------------------------------------------------------------
 function cinder_setup() {
-    apt-get -y install cinder-api cinder-scheduler cinder-volume iscsitarget open-iscsi iscsitarget-dkms
+    install_package cinder-api cinder-scheduler cinder-volume iscsitarget open-iscsi iscsitarget-dkms
     mysql -uroot -p${MYSQL_PASS} -e "CREATE DATABASE cinder;"
     mysql -uroot -p${MYSQL_PASS} -e "GRANT ALL ON cinder.* TO 'cinderUser'@'%' IDENTIFIED BY 'cinderPass';"
     
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/temp/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
     
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/temp/etc.cinder/api-paste.ini > /etc/cinder/api-paste.ini
-    sed -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/temp/etc.cinder/cinder.conf > /etc/cinder/cinder.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.cinder/api-paste.ini > /etc/cinder/api-paste.ini
+    sed -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.cinder/cinder.conf > /etc/cinder/cinder.conf
     
     cinder-manage db sync
     pvcreate ${CINDER_VOLUME}
     vgcreate cinder-volumes ${CINDER_VOLUME}
-    service cinder-volume restart
-    service cinder-api restart
+    restart_service cinder-volume
+    restart_service cinder-api
 }
 
 # --------------------------------------------------------------------------------------
 # install horizon
 # --------------------------------------------------------------------------------------
 function horizon_setup() {
-    apt-get -y install openstack-dashboard memcached
+    install_package openstack-dashboard memcached
 }
 
 # --------------------------------------------------------------------------------------
@@ -341,7 +404,6 @@ case "$1" in
         GLANCE_IP=${HOST_IP}
         QUANTUM_IP=${HOST_IP}
         check_env $2
-        set_env
         shell_env
         init
         mysql_setup
@@ -356,45 +418,38 @@ case "$1" in
         ;;
     quantum)
         check_env
-        set_env
         shell_env
         quantum_setup
         create_network
         ;;
     cinder)
         check_env
-        set_env
         shell_env
         cinder_setup
         ;;
     keystone)
         check_env
-        set_env
         shell_env
         mysql_setup
         keystone_setup
         ;;
     glance)
         check_env
-        set_env
         shell_env
         glance_setup
         ;;
     nova)
         check_env
-        set_env
         shell_env
         nova_setup
         ;;
     horizon)
         check_env
-        set_env
         shell_env
         horizon_setup
         ;;
     nova_add)
         check_env
-        set_env
         shell_env
         echo "wait a moment, now I am developing...:D"
         ;;

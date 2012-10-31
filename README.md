@@ -80,17 +80,10 @@ and Especialy you need to have a disk device for cinder such as /dev/sda6.
 How to use
 ----
 
-Update these environment on set_env() function.
+Update these environment on deploy.conf.
 
     # for all in one
     HOST_IP='192.168.0.8'
-    # for separated nodes (in near future, these env will be usefull)
-    NOVA_IP='192.168.0.8'
-    GLANCE_IP='192.168.0.8'
-    KEYSTONE_IP='192.168.0.8'
-    CINDER_IP='192.168.0.8'
-    DB_IP='192.168.0.8'
-    QUANTUM_IP='192.168.0.8'
     # etc env
     MYSQL_PASS='secret'
     CINDER_VOLUME='/dev/sda6'
@@ -109,7 +102,7 @@ Run this script.
 
     % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 	% cd openstack_folsom_deploy
-	% ./deploy allinone
+	% ./deploy.sh allinone
 
 That's all. :D
 
