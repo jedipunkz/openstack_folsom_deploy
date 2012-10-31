@@ -109,7 +109,7 @@ openvswitch will adding eth0 and eth1 for bridge interfaces.</p>
 
 <h2>How to use</h2>
 
-<p>Update these environment on deploy.conf.</p>
+<h4>Update these environment on deploy.conf.</h4>
 
 <pre><code># for all in one
 HOST_IP='192.168.0.8'
@@ -128,14 +128,29 @@ EXT_NET_END='10.200.8.40'
 EXT_NET_RANGE='10.200.8.0/24'
 </code></pre>
 
-<p>Run this script.</p>
+<p>Meaning of these parameters are ...</p>
+
+<pre><code>$HOST_IP         : Target Host's IP addr (all in one)
+$MYSQL_PASS      : MySQL's root password
+$CINDER_VOLUME   : disk device name for cinder
+$DATA_NIC        : name of NIC for VM (Data) Segment
+$PUBLIC_NIC      : name of NIC for Public Segment
+$INT_NET_GATEWAY : Quantum's internal network's gateway
+$INT_NET_RANGE   : Quantum's internal network's range
+$EXT_NET_GATEWAY : Quantum's external network's gateway
+$EXT_NET_START   : Quantum's external network's starting addr
+$EXT_NET_END     : Quantum's external network's ending addr
+$EXT_NET_RANGE   : Quantum's external network's range
+</code></pre>
+
+<h4>Run this script.</h4>
 
 <pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 % cd openstack_folsom_deploy
 % ./deploy.sh allinone
 </code></pre>
 
-<p>That's all. :D</p>
+<p>You've done :D</p>
 
 <p>Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .</p>
 
