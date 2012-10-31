@@ -98,6 +98,20 @@ Update these environment on deploy.conf.
     EXT_NET_END='10.200.8.40'
     EXT_NET_RANGE='10.200.8.0/24'
 
+Meaning of these parameters are ...
+
+$HOST_IP         : Target Host's IP addr (all in one)
+$MYSQL_PASS      : MySQL's root password
+$CINDER_VOLUME   : disk device name for cinder
+$DATA_NIC        : name of NIC for VM (Data) Segment
+$PUBLIC_NIC      : name of NIC for Public Segment
+$INT_NET_GATEWAY : Quantum's internal network's gateway
+$INT_NET_RANGE   : Quantum's internal network's range
+$EXT_NET_GATEWAY : Quantum's external network's gateway
+$EXT_NET_START   : Quantum's external network's starting addr
+$EXT_NET_END     : Quantum's external network's ending addr
+$EXT_NET_RANGE   : Quantum's external network's range
+
 Run this script.
 
     % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
