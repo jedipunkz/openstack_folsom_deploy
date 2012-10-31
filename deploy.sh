@@ -13,36 +13,6 @@ set -ex
 source ./deploy.conf
 
 # --------------------------------------------------------------------------------------
-# set environment
-# --------------------------------------------------------------------------------------
-#function set_env() {
-#    BASE_DIR=`pwd`
-#    
-#    # for all in one
-#    HOST_IP='192.168.0.8'
-#    # for separated nodes (in near future, I support these parameters)
-#    #NOVA_IP='192.168.0.8'
-#    #GLANCE_IP='192.168.0.8'
-#    #KEYSTONE_IP='192.168.0.8'
-#    #CINDER_IP='192.168.0.8'
-#    #DB_IP='192.168.0.8'
-#    #QUANTUM_IP='192.168.0.8'
-#    # etc env
-#    MYSQL_PASS='secret'
-#    CINDER_VOLUME='/dev/sda6'
-#    DATA_NIC='eth1'
-#    PUBLIC_NIC='eth0'
-#    
-#    # quantun env
-#    INT_NET_GATEWAY='172.24.17.254'
-#    INT_NET_RANGE='172.24.17.0/24'
-#    EXT_NET_GATEWAY='10.200.8.1'
-#    EXT_NET_START='10.200.8.36'
-#    EXT_NET_END='10.200.8.40'
-#    EXT_NET_RANGE='10.200.8.0/24'
-#}
-
-# --------------------------------------------------------------------------------------
 # check environment
 # --------------------------------------------------------------------------------------
 function check_env() {
