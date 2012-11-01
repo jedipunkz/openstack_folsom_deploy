@@ -80,7 +80,16 @@ and Especialy you need to have a disk device for cinder such as /dev/sda6.
 How to use
 ----
 
+### git clone scripts
+
+on your target node, git clone these scripts.
+
+    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+	% cd openstack_folsom_deploy
+
 #### Update these environment on deploy.conf.
+
+update environmet paramters with deploy.conf
 
     # for all in one
     HOST_IP='192.168.0.8'
@@ -114,11 +123,11 @@ Meaning of these parameters are ...
 
 #### Run this script.
 
-    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
-	% cd openstack_folsom_deploy
+Now you can run this deploy.sh.
+
 	% ./deploy.sh allinone
 
-You've done :D
+Wait a moment and You've done :D
 
 Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .
 
