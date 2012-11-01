@@ -109,7 +109,17 @@ openvswitch will adding eth0 and eth1 for bridge interfaces.</p>
 
 <h2>How to use</h2>
 
+<h3>git clone scripts</h3>
+
+<p>on your target node, git clone these scripts.</p>
+
+<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+% cd openstack_folsom_deploy
+</code></pre>
+
 <h4>Update these environment on deploy.conf.</h4>
+
+<p>update environmet paramters with deploy.conf</p>
 
 <pre><code># for all in one
 HOST_IP='192.168.0.8'
@@ -145,12 +155,12 @@ $EXT_NET_RANGE   : Quantum's external network's range
 
 <h4>Run this script.</h4>
 
-<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
-% cd openstack_folsom_deploy
-% ./deploy.sh allinone
+<p>Now you can run this deploy.sh.</p>
+
+<pre><code>% ./deploy.sh allinone
 </code></pre>
 
-<p>You've done :D</p>
+<p>Wait a moment and You've done :D</p>
 
 <p>Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .</p>
 
