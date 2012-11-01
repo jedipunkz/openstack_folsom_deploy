@@ -30,6 +30,7 @@ function check_env() {
         echo "You can run this code on Ubuntu OS only."
         exit 1
     fi
+    export CODENAME
 }
 
 # --------------------------------------------------------------------------------------
@@ -40,6 +41,10 @@ function check_os() {
     export VENDER
 }
 
+function check_codename() {
+    VENDOR=$(lsb_release -c -s)
+    export CODENAME
+}
 # --------------------------------------------------------------------------------------
 # package installation function
 # --------------------------------------------------------------------------------------
@@ -105,9 +110,14 @@ fudge 127.127.1.0 stratum 10
 EOF
 
     # setup Ubuntu Cloud Archive repository
-    echo deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/folsom main >> /etc/apt/sources.list.d/folsom.list
-    apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 5EDB1B62EC4926EA
-    apt-get update
+    check_codename
+    if [[ "$CODENAME" = "quantal" ]]; then
+        echo "quantul don't need Ubuntu Cloud Archive repository."
+    else
+        echo deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/folsom main >> /etc/apt/sources.list.d/folsom.list
+        apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 5EDB1B62EC4926EA
+        apt-get update
+    fi
 }
 
 
@@ -269,7 +279,12 @@ function glance_setup() {
 # install openvswitch
 # --------------------------------------------------------------------------------------
 function openvswitch_setup() {
-    install_package openvswitch-switch openvswitch-datapath-dkms
+    check_codename
+    if [[ "$CODENAME" = "precise" ]]; then
+        install_package openvswitch-switch openvswitch-datapath-dkms
+    else
+        install_package openvswitch-switch
+    fi
     ovs-vsctl add-br br-int
     ovs-vsctl add-br br-eth1
     ovs-vsctl add-port br-eth1 ${DATA_NIC}

@@ -1,7 +1,7 @@
-OpenStack Folsom Deploy Script
+OpenStack Folsom bootstrap script
 =======================
 
-OpenStack Folsom (2012.2) bootstrap script for Ubuntu Server 12.04 LTS.
+OpenStack Folsom bootstrap script for Ubuntu Server
 
 Author
 ----
@@ -24,6 +24,10 @@ use Ubuntu Cloud Archive packages.
 
 Premise Environment
 ----
+
+You need 1 or more node(s) with Ubuntu Server 12.04 LTS / 12.10.
+
+(2012/11/01) today, I tested on 12.10 with force option.
 
 You should have a machine with 3 NICs. eth0 is public network interface. eth1
 is VM (data) network interface, this will be used for communication to other
@@ -80,19 +84,17 @@ and Especialy you need to have a disk device for cinder such as /dev/sda6.
 How to use
 ----
 
-### git clone scripts
-
-on your target node, git clone these scripts.
-
-    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
-	% cd openstack_folsom_deploy
-
-#### Update these environment on deploy.conf.
-
-update environmet paramters with deploy.conf
+Update these environment on set_env() function.
 
     # for all in one
     HOST_IP='192.168.0.8'
+    # for separated nodes (in near future, these env will be usefull)
+    NOVA_IP='192.168.0.8'
+    GLANCE_IP='192.168.0.8'
+    KEYSTONE_IP='192.168.0.8'
+    CINDER_IP='192.168.0.8'
+    DB_IP='192.168.0.8'
+    QUANTUM_IP='192.168.0.8'
     # etc env
     MYSQL_PASS='secret'
     CINDER_VOLUME='/dev/sda6'
@@ -107,27 +109,13 @@ update environmet paramters with deploy.conf
     EXT_NET_END='10.200.8.40'
     EXT_NET_RANGE='10.200.8.0/24'
 
-Meaning of these parameters are ...
+Run this script.
 
-    $HOST_IP         : Target Host's IP addr (all in one)
-    $MYSQL_PASS      : MySQL's root password
-    $CINDER_VOLUME   : disk device name for cinder
-    $DATA_NIC        : name of NIC for VM (Data) Segment
-    $PUBLIC_NIC      : name of NIC for Public Segment
-    $INT_NET_GATEWAY : Quantum's internal network's gateway
-    $INT_NET_RANGE   : Quantum's internal network's range
-    $EXT_NET_GATEWAY : Quantum's external network's gateway
-    $EXT_NET_START   : Quantum's external network's starting addr
-    $EXT_NET_END     : Quantum's external network's ending addr
-    $EXT_NET_RANGE   : Quantum's external network's range
+    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+	% cd openstack_folsom_deploy
+	% ./deploy allinone    # if you use Ubuntu Server 12.10, use 'force' option
 
-#### Run this script.
-
-Now you can run this deploy.sh.
-
-	% ./deploy.sh allinone
-
-Wait a moment and You've done :D
+That's all. :D
 
 Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .
 
