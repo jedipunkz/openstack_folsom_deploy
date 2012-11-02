@@ -113,11 +113,29 @@ Run this script.
 
     % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 	% cd openstack_folsom_deploy
-	% ./deploy allinone    # if you use Ubuntu Server 12.10, use 'force' option
+	% ./deploy.sh allinone    # if you use Ubuntu Server 12.10, use 'force' option
 
-That's all. :D
+That's all and You've done :D
 
 Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .
+
+#### Additional Compute Node
+
+If you have a plan to build additinal compute nodes, please run deploy.sh with 'add_nova' option.
+
+    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+	% cd openstack_folsom_deploy
+	% ./deploy.sh add_nova
+
+check your nova status with this command :
+
+    % sudo nova-manage service list
+    Binary           Host                                 Zone             Status     State Updated_At
+    nova-cert        opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:07
+    nova-consoleauth opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:07
+    nova-compute     opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:13
+    nova-scheduler   opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:07
+    nova-compute     opst-folsom02                        nova             enabled    :-)   2012-11-02 10:10:16
 
 Using floating ip
 ----
