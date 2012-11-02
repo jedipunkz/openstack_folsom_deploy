@@ -303,6 +303,7 @@ quantum_setup() {
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
     sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    sed -e "s@<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf /etc/quantum/quantum.conf
     
     restart_service quantum-server
     restart_service quantum-plugin-openvswitch-agent
@@ -342,6 +343,37 @@ function nova_setup() {
     
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    
+    chown -R nova. /etc/nova
+    chmod 644 /etc/nova/nova.conf
+    nova-manage db sync
+    cd /etc/init.d/; for i in $( ls nova-* ); do sudo service $i restart; done
+    nova-manage service list
+}
+
+# --------------------------------------------------------------------------------------
+# install additional nova
+# --------------------------------------------------------------------------------------
+function add_nova_setup() {
+    # etc 
+    install_package vlan bridge-utils kvm libvirt-bin pm-utils
+    virsh net-destroy default
+    virsh net-undefine default
+    # openvswitch
+    install_package openvswitch-switch
+    ovs-vsctl add-br br-int
+    ovs-vsctl add-br br-eth2
+    ovs-vsctl add-port br-eth2 eth2
+    # quantum setup
+    install_package quantum-plugin-openvswitch-agent
+    sed -e "s#<QUANTUM_IP>#${ADD_NOVA_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    sed -e "s@<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf /etc/quantum/quantum.conf
+    service quantum-plugin-openvswitch-agent restart
+    # nova setup
+    install_package nova-api-metadata nova-compute-kvm
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    cp $BASE_DIR/conf/etc.nova/nova-compute.conf /etc/nova/nova-compute.conf
     
     chown -R nova. /etc/nova
     chmod 644 /etc/nova/nova.conf
@@ -433,13 +465,15 @@ case "$1" in
         shell_env
         horizon_setup
         ;;
-    nova_add)
+    add_nova)
         check_env
         shell_env
+        init
+        add_nova_setup
         echo "wait a moment, now I am developing...:D"
         ;;
     *)
-        echo $"Usage : $0 {allinone|quantum|cinder|keystone|glance|nova|horizon|nova_add}"
+        echo $"Usage : $0 {allinone|quantum|cinder|keystone|glance|nova|horizon|add_nova}"
         exit 1
         ;;
 esac
