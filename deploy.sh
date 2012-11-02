@@ -303,7 +303,7 @@ quantum_setup() {
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
     sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
-    sed -e "s@<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf /etc/quantum/quantum.conf
+    sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf /etc/quantum/quantum.conf
     
     restart_service quantum-server
     restart_service quantum-plugin-openvswitch-agent
@@ -367,7 +367,7 @@ function add_nova_setup() {
     # quantum setup
     install_package quantum-plugin-openvswitch-agent
     sed -e "s#<QUANTUM_IP>#${ADD_NOVA_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
-    sed -e "s@<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf /etc/quantum/quantum.conf
+    sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf /etc/quantum/quantum.conf
     service quantum-plugin-openvswitch-agent restart
     # nova setup
     install_package nova-api-metadata nova-compute-kvm
