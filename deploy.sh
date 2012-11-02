@@ -362,8 +362,8 @@ function add_nova_setup() {
     # openvswitch
     install_package openvswitch-switch
     ovs-vsctl add-br br-int
-    ovs-vsctl add-br br-eth2
-    ovs-vsctl add-port br-eth2 eth2
+    ovs-vsctl add-br br-eth1
+    ovs-vsctl add-port br-eth1 ${DATA_NIC_COMPUTE}
     # quantum setup
     install_package quantum-plugin-openvswitch-agent
     sed -e "s#<QUANTUM_IP>#${ADD_NOVA_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
