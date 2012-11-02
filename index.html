@@ -31,9 +31,9 @@
         <hr>
 
         <section id="main_content">
-          <h1>OpenStack Folsom Deploy Script</h1>
+          <h1>OpenStack Folsom Bootstrap Script</h1>
 
-<p>OpenStack Folsom (2012.2) bootstrap script for Ubuntu Server 12.04 LTS.</p>
+<p>OpenStack Folsom bootstrap script for Ubuntu Server</p>
 
 <h2>Author</h2>
 
@@ -53,6 +53,10 @@ openstack compornents was not booted. That is not good for me. and I wanted to
 use Ubuntu Cloud Archive packages.</p>
 
 <h2>Premise Environment</h2>
+
+<p>You need 1 or more node(s) with Ubuntu Server 12.04 LTS / 12.10.</p>
+
+<p>(2012/11/01) today, I tested on 12.10 with force option.</p>
 
 <p>You should have a machine with 3 NICs. eth0 is public network interface. eth1
 is VM (data) network interface, this will be used for communication to other
@@ -109,20 +113,17 @@ openvswitch will adding eth0 and eth1 for bridge interfaces.</p>
 
 <h2>How to use</h2>
 
-<h3>git clone scripts</h3>
-
-<p>on your target node, git clone these scripts.</p>
-
-<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
-% cd openstack_folsom_deploy
-</code></pre>
-
-<h4>Update these environment on deploy.conf.</h4>
-
-<p>update environmet paramters with deploy.conf</p>
+<p>Update these environment on set_env() function.</p>
 
 <pre><code># for all in one
 HOST_IP='192.168.0.8'
+# for separated nodes (in near future, these env will be usefull)
+NOVA_IP='192.168.0.8'
+GLANCE_IP='192.168.0.8'
+KEYSTONE_IP='192.168.0.8'
+CINDER_IP='192.168.0.8'
+DB_IP='192.168.0.8'
+QUANTUM_IP='192.168.0.8'
 # etc env
 MYSQL_PASS='secret'
 CINDER_VOLUME='/dev/sda6'
@@ -138,31 +139,36 @@ EXT_NET_END='10.200.8.40'
 EXT_NET_RANGE='10.200.8.0/24'
 </code></pre>
 
-<p>Meaning of these parameters are ...</p>
+<p>Run this script.</p>
 
-<pre><code>$HOST_IP         : Target Host's IP addr (all in one)
-$MYSQL_PASS      : MySQL's root password
-$CINDER_VOLUME   : disk device name for cinder
-$DATA_NIC        : name of NIC for VM (Data) Segment
-$PUBLIC_NIC      : name of NIC for Public Segment
-$INT_NET_GATEWAY : Quantum's internal network's gateway
-$INT_NET_RANGE   : Quantum's internal network's range
-$EXT_NET_GATEWAY : Quantum's external network's gateway
-$EXT_NET_START   : Quantum's external network's starting addr
-$EXT_NET_END     : Quantum's external network's ending addr
-$EXT_NET_RANGE   : Quantum's external network's range
+<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+% cd openstack_folsom_deploy
+% ./deploy.sh allinone    # if you use Ubuntu Server 12.10, use 'force' option
 </code></pre>
 
-<h4>Run this script.</h4>
-
-<p>Now you can run this deploy.sh.</p>
-
-<pre><code>% ./deploy.sh allinone
-</code></pre>
-
-<p>Wait a moment and You've done :D</p>
+<p>That's all and You've done :D</p>
 
 <p>Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .</p>
+
+<h4>Additional Compute Node</h4>
+
+<p>If you have a plan to build additinal compute nodes, please run deploy.sh with 'add_nova' option.</p>
+
+<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+% cd openstack_folsom_deploy
+% ./deploy.sh add_nova
+</code></pre>
+
+<p>check your nova status with this command :</p>
+
+<pre><code>% sudo nova-manage service list
+Binary           Host                                 Zone             Status     State Updated_At
+nova-cert        opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:07
+nova-consoleauth opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:07
+nova-compute     opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:13
+nova-scheduler   opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:07
+nova-compute     opst-folsom02                        nova             enabled    :-)   2012-11-02 10:10:16
+</code></pre>
 
 <h2>Using floating ip</h2>
 
