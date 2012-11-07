@@ -342,7 +342,7 @@ function nova_setup() {
     mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON nova.* TO 'novaUser'@'%' IDENTIFIED BY 'novaPass';"
     
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_IP>#127.0.0.1#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
     
     chown -R nova. /etc/nova
     chmod 644 /etc/nova/nova.conf
@@ -372,7 +372,7 @@ function add_nova_setup() {
     # nova setup
     install_package nova-api-metadata nova-compute-kvm
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_IP>#${ADD_NOVA_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
     cp $BASE_DIR/conf/etc.nova/nova-compute.conf /etc/nova/nova-compute.conf
     
     chown -R nova. /etc/nova
@@ -470,7 +470,6 @@ case "$1" in
         shell_env
         init
         add_nova_setup
-        echo "wait a moment, now I am developing...:D"
         ;;
     *)
         echo $"Usage : $0 {allinone|quantum|cinder|keystone|glance|nova|horizon|add_nova}"
