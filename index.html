@@ -56,8 +56,6 @@ use Ubuntu Cloud Archive packages.</p>
 
 <p>You need 1 or more node(s) with Ubuntu Server 12.04 LTS / 12.10.</p>
 
-<p>(2012/11/01) today, I tested on 12.10 with force option.</p>
-
 <p>You should have a machine with 3 NICs. eth0 is public network interface. eth1
 is VM (data) network interface, this will be used for communication to other
 VMs on other compute nodes. eth2 is completely for management.</p>
@@ -65,7 +63,7 @@ VMs on other compute nodes. eth2 is completely for management.</p>
 <p>fixed_range is not same as VM (data) segment. so If you want use GRE Tunneling
 for each VMs communication, these segments must not be same.</p>
 
-<pre><code>        management segment 192.168.0.0/24
+<pre><code>        management segment 172.16.1.0/24
 +-------------------------------------------
 | eth2 192.168.0.8
 +------------+
@@ -100,9 +98,9 @@ iface eth1 inet static
 
 auto eth2
 iface eth2 inet static
-    address 192.168.0.8
+    address 172.16.1.11
     netmask 255.255.255.0
-    gateway 192.168.0.1
+    gateway 172.16.1.1
     dns-nameservers 8.8.8.8 8.8.4.4
 </code></pre>
 
@@ -113,25 +111,33 @@ openvswitch will adding eth0 and eth1 for bridge interfaces.</p>
 
 <h2>How to use</h2>
 
+<p>get script to your target.</p>
+
+<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+% cd openstack_folsom_deploy
+</code></pre>
+
 <p>Update these environment in deploy.conf</p>
 
-<pre><code># for all in one
-HOST_IP='192.168.0.8'
+<pre><code># for all in one (controller)
+HOST_IP='172.16.1.11'
 # for separated nodes (in near future, I support these parameters)
-NOVA_IP='192.168.0.8'
-KEYSTONE_IP='192.168.0.8'
-GLANCE_IP='192.168.0.8'
-CINDER_IP='192.168.0.8'
-DB_IP='192.168.0.8'
-QUANTUM_IP='192.168.0.8'
-RABBIT_IP='192.168.0.8'
+NOVA_IP='172.16.1.11'
+KEYSTONE_IP='172.16.1.11'
+GLANCE_IP='172.16.1.11'
+CINDER_IP='172.16.1.11'
+DB_IP='172.16.1.11'
+QUANTUM_IP='172.16.1.11'
+RABBIT_IP='172.16.1.11'
 # etc env
 MYSQL_PASS='secret'
 CINDER_VOLUME='/dev/sda6'
 DATA_NIC='eth1'
 PUBLIC_NIC='eth0'
-# additional compute env
-ADD_NOVA_IP='192.168.0.9'
+# network_type : gre or vlan
+NETWORK_TYPE='vlan'
+# additional compute (compute)
+ADD_NOVA_IP='172.16.1.12'
 DATA_NIC_COMPUTE='eth1'
 
 # quantun env
@@ -145,9 +151,7 @@ EXT_NET_RANGE='10.200.8.0/24'
 
 <p>Run this script.</p>
 
-<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
-% cd openstack_folsom_deploy
-% ./deploy.sh allinone    # if you use Ubuntu Server 12.10, use 'force' option
+<pre><code>% ./deploy.sh controller
 </code></pre>
 
 <p>That's all and You've done :D</p>
@@ -156,11 +160,12 @@ EXT_NET_RANGE='10.200.8.0/24'
 
 <h4>Additional Compute Node</h4>
 
-<p>If you have a plan to build additinal compute nodes, please run deploy.sh with 'add_nova' option.</p>
+<p>If you have a plan to build additinal compute nodes, please run deploy.sh with 'compute' option.
+parameters of deploy.conf must be same as controller's one.</p>
 
-<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+<pre><code>% scp -r &lt;controller_ip&gt;:~/openstack_folsom_deploy .
 % cd openstack_folsom_deploy
-% ./deploy.sh add_nova
+% ./deploy.sh compute
 </code></pre>
 
 <p>check your nova status with this command :</p>
@@ -194,6 +199,13 @@ nova-compute     opst-folsom02                        nova             enabled  
 % nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 % nova secgroup-list-rules default
 </code></pre>
+
+<h2>Versions and Changelog</h2>
+
+<ul>
+<li>2012/11/01 : version 0.1 : First Release.</li>
+<li>2012/11/08 : version 0.2 : Supported VLAN mode of quantum.</li>
+</ul>
         </section>
 
         <footer>
