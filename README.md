@@ -31,18 +31,21 @@ You should have a machine with 3 NICs. eth0 is public network interface. eth1
 is VM (data) network interface, this will be used for communication to other
 VMs on other compute nodes. eth2 is completely for management.
 
-fixed_range is not same as VM (data) segment. so If you want use GRE Tunneling
-for each VMs communication, these segments must not be same.
+Quantum was designed based on 4 networks, public/data/management/api. This script
+designed based on 3 networks (if you want 4 networks, you can do it with this).
+public/data/management & api. All of APIs will be listening on management networks
+interface.
 
 
             management segment 172.16.1.0/24
     +-------------------------------------------
     | eth2 192.168.0.8
-    +------------+
-    |            | eth1
-    | controller | fixed_range = 172.24.17.0/24
-    |            | data segment = 172.26.0.0/24
-    +------------+
+    +------------+                               +-----------+
+    |            | eth1 ------------------------ |           |
+    | controller | vlan/gre seg = 172.24.17.0/24 | compute01 | ..> adding
+    |            | data segment = 172.16.2.0/24  |           |
+    +------------+                               +-----------+
+    |
     | eth0                                      +--------+
     +-------------------------------------------| Router |--> The Internet
             public segment 10.200.8.0/24        +--------+
@@ -64,7 +67,7 @@ so you should setup each NICs like this. this is /etc/network/interface
     
     auto eth1
     iface eth1 inet static
-        address 172.26.0.110
+        address 172.26.2.11
         netmask 255.255.255.0
     
     auto eth2
@@ -144,6 +147,13 @@ check your nova status with this command :
     nova-compute     opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:13
     nova-scheduler   opst-folsom01                        nova             enabled    :-)   2012-11-02 10:10:07
     nova-compute     opst-folsom02                        nova             enabled    :-)   2012-11-02 10:10:16
+
+Need more compute node(s) ? you can do it.
+
+    % scp -r <controller_ip>:~/openstack_folsom_deploy .
+	% cd openstack_folsom_deploy
+    % vim deploy.conf # update $ADD_NOVA_IP
+	% ./deploy.sh compute
 
 Using floating ip
 ----
