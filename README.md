@@ -27,8 +27,6 @@ Premise Environment
 
 You need 1 or more node(s) with Ubuntu Server 12.04 LTS / 12.10.
 
-(2012/11/01) today, I tested on 12.10 with force option.
-
 You should have a machine with 3 NICs. eth0 is public network interface. eth1
 is VM (data) network interface, this will be used for communication to other
 VMs on other compute nodes. eth2 is completely for management.
@@ -167,3 +165,9 @@ If you want to access to VMs from anyware, do these operation.
 	% nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 	% nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 	% nova secgroup-list-rules default
+
+Versions and Changelog
+----
+
+* 2012/11/01 : version 0.1 : First Release.
+* 2012/11/08 : version 0.2 : Supported VLAN mode of quantum.
