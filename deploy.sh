@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # allright reserved by Tomokazu Hirai @jedipunkz
-# KDDI Web Communications Inc.
 #
 # This is openstack bootstrap script code. I tested on Ubuntu Server 12.04 LTS
-# only. You should set your environment parameters to set_env() function's 
-# parameters, such as $HOST_IP and MYAQL_PASS and ... more. And now allinone
-# mode was only supported. ;) Now I am developing for using on separated 
+# and 12.10. You should set your environment parameters to deploy.conf
+# such as $HOST_IP and MYAQL_PASS and ... more. And now controller or
+# compute type is only supported. ;) Now I am developing for using on separated 
 # compornent node and separated compute node.
+#
+# Usage : sudo ./deploy.sh <type>
+#   type  : controller | compute | keystone | glance | cinder | horizon
 
 set -ex
 
@@ -18,13 +20,9 @@ source ./deploy.conf
 function check_env() {
     if [[ -x $(which lsb_release 2>/dev/null) ]]; then
         CODENAME=$(lsb_release -c -s)
-        if [[ "precise" != $CODENAME ]]; then
-            echo "This code was tested on precise only."
-            echo "If you want to run this code anyway run with 'force' option."
-            echo "ex) sudo ./openstack_install_folsom.sh allinone force"
-            if [[ "$1" != "force" ]]; then
-                exit 1
-            fi
+        if [[ $CODENAME != "precise" && $CODENAME != "quantal" ]]; then
+            echo "This code was tested on precise and quantal only."
+            exit 1
         fi
     else
         echo "You can run this code on Ubuntu OS only."
@@ -302,8 +300,16 @@ quantum_setup() {
     
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
-    sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
     sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
+    if [[ "$NETWORK_TYPE" = "gre" ]]; then
+        sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    elif [[ "$NETWORK_TYPE" = "vlan" ]]; then
+        sed -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.vlan > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    else
+        echo "<network_type> must be 'gre' or 'vlan'."
+        exit 1
+    fi
+    
     
     restart_service quantum-server
     restart_service quantum-plugin-openvswitch-agent
@@ -315,17 +321,35 @@ quantum_setup() {
 # create network via quantum
 # --------------------------------------------------------------------------------------
 function create_network() {
-    # create internal network
-    TENANT_ID=$(keystone tenant-list | grep " admin " | get_field 1)
-    INT_NET_ID=$(quantum net-create --tenant-id ${TENANT_ID} int_net | grep ' id ' | get_field 2)
-    INT_SUBNET_ID=$(quantum subnet-create --tenant-id ${TENANT_ID} --ip_version 4 --gateway ${INT_NET_GATEWAY} ${INT_NET_ID} ${INT_NET_RANGE} | grep ' id ' | get_field 2)
-    quantum subnet-update ${INT_SUBNET_ID} list=true --dns_nameservers 8.8.8.8 8.8.4.4
-    INT_ROUTER_ID=$(quantum router-create --tenant-id ${TENANT_ID} router-admin | grep ' id ' | get_field 2)
-    quantum router-interface-add ${INT_ROUTER_ID} ${INT_SUBNET_ID}
-    # create external network
-    EXT_NET_ID=$(quantum net-create ext_net -- --router:external=True | grep ' id ' | get_field 2)
-    quantum subnet-create --gateway=${EXT_NET_GATEWAY} --allocation-pool start=${EXT_NET_START},end=${EXT_NET_END} ${EXT_NET_ID} ${EXT_NET_RANGE} -- --enable_dhcp=False
-    quantum router-gateway-set ${INT_ROUTER_ID} ${EXT_NET_ID}
+    if [[ "$NETWORK_TYPE" = "gre" ]]; then
+        # create internal network
+        TENANT_ID=$(keystone tenant-list | grep " admin " | get_field 1)
+        INT_NET_ID=$(quantum net-create --tenant-id ${TENANT_ID} int_net | grep ' id ' | get_field 2)
+        INT_SUBNET_ID=$(quantum subnet-create --tenant-id ${TENANT_ID} --ip_version 4 --gateway ${INT_NET_GATEWAY} ${INT_NET_ID} ${INT_NET_RANGE} | grep ' id ' | get_field 2)
+        quantum subnet-update ${INT_SUBNET_ID} list=true --dns_nameservers 8.8.8.8 8.8.4.4
+        INT_ROUTER_ID=$(quantum router-create --tenant-id ${TENANT_ID} router-admin | grep ' id ' | get_field 2)
+        quantum router-interface-add ${INT_ROUTER_ID} ${INT_SUBNET_ID}
+        # create external network
+        EXT_NET_ID=$(quantum net-create ext_net -- --router:external=True | grep ' id ' | get_field 2)
+        quantum subnet-create --gateway=${EXT_NET_GATEWAY} --allocation-pool start=${EXT_NET_START},end=${EXT_NET_END} ${EXT_NET_ID} ${EXT_NET_RANGE} -- --enable_dhcp=False
+        quantum router-gateway-set ${INT_ROUTER_ID} ${EXT_NET_ID}
+    elif [[ "$NETWORK_TYPE" = "vlan" ]]; then
+        # create internal network
+        TENANT_ID=$(keystone tenant-list | grep " admin " | get_field 1)
+        INT_NET_ID=$(quantum net-create --tenant-id ${TENANT_ID} int_net --provider:network_type vlan --provider:physical_network physnet1 --provider:segmentation_id 1024| grep ' id ' | get_field 2)
+        INT_SUBNET_ID=$(quantum subnet-create --tenant-id ${TENANT_ID} --ip_version 4 --gateway ${INT_NET_GATEWAY} ${INT_NET_ID} ${INT_NET_RANGE} | grep ' id ' | get_field 2)
+        quantum subnet-update ${INT_SUBNET_ID} list=true --dns_nameservers 8.8.8.8 8.8.4.4
+        INT_ROUTER_ID=$(quantum router-create --tenant-id ${TENANT_ID} router-admin | grep ' id ' | get_field 2)
+        quantum router-interface-add ${INT_ROUTER_ID} ${INT_SUBNET_ID}
+        # create external network
+        EXT_NET_ID=$(quantum net-create ext_net -- --router:external=True | grep ' id ' | get_field 2)
+        quantum subnet-create --gateway=${EXT_NET_GATEWAY} --allocation-pool start=${EXT_NET_START},end=${EXT_NET_END} ${EXT_NET_ID} ${EXT_NET_RANGE} -- --enable_dhcp=False
+        quantum router-gateway-set ${INT_ROUTER_ID} ${EXT_NET_ID}
+    else
+        echo "network type : gre, vlan"
+        echo "no such parameter of network type"
+        exit 1
+    fi
 }
 
 # --------------------------------------------------------------------------------------
@@ -366,7 +390,14 @@ function add_nova_setup() {
     ovs-vsctl add-port br-eth1 ${DATA_NIC_COMPUTE}
     # quantum setup
     install_package quantum-plugin-openvswitch-agent
-    sed -e "s#<QUANTUM_IP>#${ADD_NOVA_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    if [[ "$NETWORK_TYPE" = "gre" ]]; then
+        sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    elif [[ "$NETWORK_TYPE" = "vlan" ]]; then
+        sed -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.vlan > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    else
+        echo "<network_type> must be 'gre' or 'vlan'."
+        exit 1
+    fi
     sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
     service quantum-plugin-openvswitch-agent restart
     # nova setup
@@ -407,20 +438,22 @@ function cinder_setup() {
 # --------------------------------------------------------------------------------------
 function horizon_setup() {
     install_package openstack-dashboard memcached
+    cp $BASE_DIR/conf/etc.openstack-dashboard/local_settings.py /etc/openstack-dashboard/local_settings.py
+    restart_service apache2
 }
 
 # --------------------------------------------------------------------------------------
 # Main Function
 # --------------------------------------------------------------------------------------
 case "$1" in
-    allinone)
+    allinone | controller)
         NOVA_IP=${HOST_IP}
         CINDER_IP=${HOST_IP}
         DB_IP=${HOST_IP}
         KEYSTONE_IP=${HOST_IP}
         GLANCE_IP=${HOST_IP}
         QUANTUM_IP=${HOST_IP}
-        check_env $2
+        check_env 
         shell_env
         init
         mysql_setup
@@ -432,6 +465,12 @@ case "$1" in
         cinder_setup
         horizon_setup
         create_network
+        ;;
+    add_nova | compute)
+        check_env
+        shell_env
+        init
+        add_nova_setup
         ;;
     quantum)
         check_env
@@ -465,14 +504,10 @@ case "$1" in
         shell_env
         horizon_setup
         ;;
-    add_nova)
-        check_env
-        shell_env
-        init
-        add_nova_setup
-        ;;
     *)
-        echo $"Usage : $0 {allinone|quantum|cinder|keystone|glance|nova|horizon|add_nova}"
+        echo "Usage : sudo ./$0 <compornent>"
+        echo "<conpornent>   : allinone,controller|add_nova,compute|quantum|cinder|keystone|glance|nova|horizon|"
+        echo "example) sudo ./deploy.sh controller"
         exit 1
         ;;
 esac

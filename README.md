@@ -37,7 +37,7 @@ fixed_range is not same as VM (data) segment. so If you want use GRE Tunneling
 for each VMs communication, these segments must not be same.
 
 
-            management segment 192.168.0.0/24
+            management segment 172.16.1.0/24
     +-------------------------------------------
     | eth2 192.168.0.8
     +------------+
@@ -71,9 +71,9 @@ so you should setup each NICs like this. this is /etc/network/interface
     
     auto eth2
     iface eth2 inet static
-        address 192.168.0.8
+        address 172.16.1.11
         netmask 255.255.255.0
-        gateway 192.168.0.1
+        gateway 172.16.1.1
         dns-nameservers 8.8.8.8 8.8.4.4
 
 You can install and manage openstack via eth2 NiC. When you run this script,
@@ -84,25 +84,32 @@ and Especialy you need to have a disk device for cinder such as /dev/sda6.
 How to use
 ----
 
+get script to your target.
+
+    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+    % cd openstack_folsom_deploy
+
 Update these environment in deploy.conf
 
-    # for all in one
-    HOST_IP='192.168.0.8'
+    # for all in one (controller)
+    HOST_IP='172.16.1.11'
     # for separated nodes (in near future, I support these parameters)
-    NOVA_IP='192.168.0.8'
-    KEYSTONE_IP='192.168.0.8'
-    GLANCE_IP='192.168.0.8'
-    CINDER_IP='192.168.0.8'
-    DB_IP='192.168.0.8'
-    QUANTUM_IP='192.168.0.8'
-    RABBIT_IP='192.168.0.8'
+    NOVA_IP='172.16.1.11'
+    KEYSTONE_IP='172.16.1.11'
+    GLANCE_IP='172.16.1.11'
+    CINDER_IP='172.16.1.11'
+    DB_IP='172.16.1.11'
+    QUANTUM_IP='172.16.1.11'
+    RABBIT_IP='172.16.1.11'
     # etc env
     MYSQL_PASS='secret'
     CINDER_VOLUME='/dev/sda6'
     DATA_NIC='eth1'
     PUBLIC_NIC='eth0'
-    # additional compute env
-    ADD_NOVA_IP='192.168.0.9'
+    # network_type : gre or vlan
+    NETWORK_TYPE='vlan'
+    # additional compute (compute)
+    ADD_NOVA_IP='172.16.1.12'
     DATA_NIC_COMPUTE='eth1'
     
     # quantun env
@@ -115,9 +122,7 @@ Update these environment in deploy.conf
 
 Run this script.
 
-    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
-	% cd openstack_folsom_deploy
-	% ./deploy.sh allinone    # if you use Ubuntu Server 12.10, use 'force' option
+	% ./deploy.sh controller
 
 That's all and You've done :D
 
@@ -125,11 +130,12 @@ Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .
 
 #### Additional Compute Node
 
-If you have a plan to build additinal compute nodes, please run deploy.sh with 'add_nova' option.
+If you have a plan to build additinal compute nodes, please run deploy.sh with 'compute' option.
+parameters of deploy.conf must be same as controller's one.
 
-    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+    % scp -r <controller_ip>:~/openstack_folsom_deploy .
 	% cd openstack_folsom_deploy
-	% ./deploy.sh add_nova
+	% ./deploy.sh compute
 
 check your nova status with this command :
 
