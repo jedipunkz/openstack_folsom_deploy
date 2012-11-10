@@ -31,7 +31,7 @@
         <hr>
 
         <section id="main_content">
-          <h1>OpenStack Folsom Bootstrap Script</h1>
+          <h1>OpenStack Folsom bootstrap script</h1>
 
 <p>OpenStack Folsom bootstrap script for Ubuntu Server</p>
 
@@ -41,7 +41,7 @@
 
 <h2>Notice</h2>
 
-<p>This script code was tested only for all in one installation. Now I am
+<p>This script code was tested only for all in one installation and additional compuote installation. Now I am
 developing for separated compornent nodes, and addtitional compute nodes.
 Please wait a moment :D or Feel FREE for your fork.</p>
 
@@ -60,20 +60,23 @@ use Ubuntu Cloud Archive packages.</p>
 is VM (data) network interface, this will be used for communication to other
 VMs on other compute nodes. eth2 is completely for management.</p>
 
-<p>fixed_range is not same as VM (data) segment. so If you want use GRE Tunneling
-for each VMs communication, these segments must not be same.</p>
+<p>Quantum was designed based on 4 networks, public/data/management/api. This script
+designed based on 3 networks (if you want 4 networks, you can do it with this).
+public/data/management &amp; api. All of APIs will be listening on management networks
+interface.</p>
 
-<pre><code>        management segment 172.16.1.0/24
-+-------------------------------------------
-| eth2 192.168.0.8
-+------------+
-|            | eth1
-| controller | fixed_range = 172.24.17.0/24
-|            | data segment = 172.26.0.0/24
-+------------+
-| eth0                                      +--------+
-+-------------------------------------------| Router |--&gt; The Internet
-        public segment 10.200.8.0/24        +--------+
+<pre><code>    management segment 172.16.1.0/24                                                                                                                                             
+    +--------------------------------------------                                                                                                                                
+    | eth2 172.16.1.11                           eth2 172.16.1.12                                                                                                                
+    +------------+                               +-----------+                                                                                                                   
+    |            | eth1 ------------------- eth1 |           |                                                                                                                   
+    | controller | vlan/gre seg = 172.24.17.0/24 | compute01 | ..&gt; adding                                                                                                        
+    |            | data segment = 172.16.2.0/24  |           |                                                                                                                   
+    +------------+ 172.16.2.11       172.16.2.12 +-----------+                                                                                                                   
+    | eth0                                       eth0                                                                                                                            
+    |                                            +--------+                                                                                                                      
+    +--------------------------------------------| Router |--&gt; The Internet                                                                                                      
+            public segment 10.200.8.0/24         +--------+ 
 </code></pre>
 
 <p>so you should setup each NICs like this. this is /etc/network/interface</p>
@@ -93,7 +96,7 @@ iface eth0 inet static
 
 auto eth1
 iface eth1 inet static
-    address 172.26.0.110
+    address 172.26.2.11
     netmask 255.255.255.0
 
 auto eth2
@@ -151,7 +154,7 @@ EXT_NET_RANGE='10.200.8.0/24'
 
 <p>Run this script.</p>
 
-<pre><code>% ./deploy.sh controller
+<pre><code>% sudo ./deploy.sh controller
 </code></pre>
 
 <p>That's all and You've done :D</p>
@@ -165,7 +168,7 @@ parameters of deploy.conf must be same as controller's one.</p>
 
 <pre><code>% scp -r &lt;controller_ip&gt;:~/openstack_folsom_deploy .
 % cd openstack_folsom_deploy
-% ./deploy.sh compute
+% sudo ./deploy.sh compute
 </code></pre>
 
 <p>check your nova status with this command :</p>
@@ -179,11 +182,20 @@ nova-scheduler   opst-folsom01                        nova             enabled  
 nova-compute     opst-folsom02                        nova             enabled    :-)   2012-11-02 10:10:16
 </code></pre>
 
+<p>Need more compute node(s) ? you can do it.</p>
+
+<pre><code>% scp -r &lt;controller_ip&gt;:~/openstack_folsom_deploy .
+% cd openstack_folsom_deploy
+% vim deploy.conf # update $ADD_NOVA_IP
+% sudo ./deploy.sh compute
+</code></pre>
+
 <h2>Using floating ip</h2>
 
 <p>If you want to use floating ip, do these operation.</p>
 
-<pre><code>% quantum net-list
+<pre><code>% source ~/openstackrc
+% quantum net-list
 % quantun floatingip-create &lt;ext_net_id&gt;
 % quantun floatingip-list
 % quantum port-list
