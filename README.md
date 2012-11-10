@@ -10,7 +10,7 @@ Tomokazu Hirai @jedipunkz
 Notice
 ----
 
-This script code was tested only for all in one installation. Now I am
+This script code was tested only for all in one installation and additional compuote installation. Now I am
 developing for separated compornent nodes, and addtitional compute nodes.
 Please wait a moment :D or Feel FREE for your fork.
 
@@ -36,19 +36,19 @@ designed based on 3 networks (if you want 4 networks, you can do it with this).
 public/data/management & api. All of APIs will be listening on management networks
 interface.
 
+        management segment 172.16.1.0/24                                                                                                                                             
+        +--------------------------------------------                                                                                                                                
+        | eth2 172.16.1.11                           eth2 172.16.1.12                                                                                                                
+        +------------+                               +-----------+                                                                                                                   
+        |            | eth1 ------------------- eth1 |           |                                                                                                                   
+        | controller | vlan/gre seg = 172.24.17.0/24 | compute01 | ..> adding                                                                                                        
+        |            | data segment = 172.16.2.0/24  |           |                                                                                                                   
+        +------------+ 172.16.2.11       172.16.2.12 +-----------+                                                                                                                   
+        | eth0                                       eth0                                                                                                                            
+        |                                            +--------+                                                                                                                      
+        +--------------------------------------------| Router |--> The Internet                                                                                                      
+                public segment 10.200.8.0/24         +--------+ 
 
-            management segment 172.16.1.0/24
-    +-------------------------------------------
-    | eth2 192.168.0.8
-    +------------+                               +-----------+
-    |            | eth1 ------------------------ |           |
-    | controller | vlan/gre seg = 172.24.17.0/24 | compute01 | ..> adding
-    |            | data segment = 172.16.2.0/24  |           |
-    +------------+                               +-----------+
-    |
-    | eth0                                      +--------+
-    +-------------------------------------------| Router |--> The Internet
-            public segment 10.200.8.0/24        +--------+
 
 so you should setup each NICs like this. this is /etc/network/interface
 
@@ -123,7 +123,7 @@ Update these environment in deploy.conf
 
 Run this script.
 
-	% ./deploy.sh controller
+	% sudo ./deploy.sh controller
 
 That's all and You've done :D
 
@@ -136,7 +136,7 @@ parameters of deploy.conf must be same as controller's one.
 
     % scp -r <controller_ip>:~/openstack_folsom_deploy .
 	% cd openstack_folsom_deploy
-	% ./deploy.sh compute
+	% sudo ./deploy.sh compute
 
 check your nova status with this command :
 
@@ -153,13 +153,14 @@ Need more compute node(s) ? you can do it.
     % scp -r <controller_ip>:~/openstack_folsom_deploy .
 	% cd openstack_folsom_deploy
     % vim deploy.conf # update $ADD_NOVA_IP
-	% ./deploy.sh compute
+	% sudo ./deploy.sh compute
 
 Using floating ip
 ----
 
 If you want to use floating ip, do these operation.
 
+    % source ~/openstackrc
     % quantum net-list
 	% quantun floatingip-create <ext_net_id>
 	% quantun floatingip-list
