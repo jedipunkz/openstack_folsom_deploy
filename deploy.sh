@@ -187,15 +187,11 @@ function keystone_setup() {
     keystone user-create --name glance --pass glance --email admin@example.com
     keystone user-create --name cinder --pass cinder --email admin@example.com
     keystone user-create --name quantum --pass quantum --email admin@example.com
+    keystone user-create --name demo --pass demo --email demo@example.com
     
     # Creating Roles
     keystone role-create --name admin
     keystone role-create --name Member
-    
-    # Listing Tenants, Users and Roles
-    keystone tenant-list
-    keystone user-list
-    keystone role-list
     
     # Adding Roles to Users in Tenants
     USER_LIST_ID_ADMIN=`mysql -u root -p${MYSQL_PASS} keystone -e "select id from user where name = 'admin'" --skip-column-name --silent`
@@ -208,6 +204,7 @@ function keystone_setup() {
     USER_LIST_ID_GLANCE=`mysql -u root -p${MYSQL_PASS} keystone -e "select id from user where name = 'glance'" --skip-column-name --silent`
     USER_LIST_ID_CINDER=`mysql -u root -p${MYSQL_PASS} keystone -e "select id from user where name = 'cinder'" --skip-column-name --silent`
     USER_LIST_ID_QUANTUM=`mysql -u root -p${MYSQL_PASS} keystone -e "select id from user where name = 'quantum'" --skip-column-name --silent`
+    USER_LIST_ID_DEMO=`mysql -u root -p${MYSQL_PASS} keystone -e "select id from user where name = 'demo'" --skip-column-name --silent`
     
     ROLE_LIST_ID_MEMBER=`mysql -u root -p${MYSQL_PASS} keystone -e "select id from role where name = 'Member'" --skip-column-name --silent`
     
@@ -222,6 +219,7 @@ function keystone_setup() {
     
     # The 'Member' role is used by Horizon and Swift. So add the 'Member' role accordingly.
     keystone user-role-add --user-id $USER_LIST_ID_ADMIN --role-id $ROLE_LIST_ID_MEMBER --tenant-id $TENANT_LIST_ID_ADMIN
+    keystone user-role-add --user-id $USER_LIST_ID_DEMO --role-id $ROLE_LIST_ID_MEMBER --tenant-id $TENANT_LIST_ID_SERVICE
     
     # Creating Services
     keystone service-create --name nova --type compute --description 'OpenStack Compute Service'
@@ -323,7 +321,7 @@ quantum_setup() {
 function create_network() {
     if [[ "$NETWORK_TYPE" = "gre" ]]; then
         # create internal network
-        TENANT_ID=$(keystone tenant-list | grep " admin " | get_field 1)
+        TENANT_ID=$(keystone tenant-list | grep " service " | get_field 1)
         INT_NET_ID=$(quantum net-create --tenant-id ${TENANT_ID} int_net | grep ' id ' | get_field 2)
         INT_SUBNET_ID=$(quantum subnet-create --tenant-id ${TENANT_ID} --ip_version 4 --gateway ${INT_NET_GATEWAY} ${INT_NET_ID} ${INT_NET_RANGE} | grep ' id ' | get_field 2)
         quantum subnet-update ${INT_SUBNET_ID} list=true --dns_nameservers 8.8.8.8 8.8.4.4
@@ -335,7 +333,7 @@ function create_network() {
         quantum router-gateway-set ${INT_ROUTER_ID} ${EXT_NET_ID}
     elif [[ "$NETWORK_TYPE" = "vlan" ]]; then
         # create internal network
-        TENANT_ID=$(keystone tenant-list | grep " admin " | get_field 1)
+        TENANT_ID=$(keystone tenant-list | grep " service " | get_field 1)
         INT_NET_ID=$(quantum net-create --tenant-id ${TENANT_ID} int_net --provider:network_type vlan --provider:physical_network physnet1 --provider:segmentation_id 1024| grep ' id ' | get_field 2)
         INT_SUBNET_ID=$(quantum subnet-create --tenant-id ${TENANT_ID} --ip_version 4 --gateway ${INT_NET_GATEWAY} ${INT_NET_ID} ${INT_NET_RANGE} | grep ' id ' | get_field 2)
         quantum subnet-update ${INT_SUBNET_ID} list=true --dns_nameservers 8.8.8.8 8.8.4.4

@@ -1,7 +1,7 @@
-OpenStack Folsom bootstrap script
+OpenStack Folsom Bootstrap Script
 =======================
 
-OpenStack Folsom bootstrap script for Ubuntu Server
+OpenStack Folsom Bootstrap Script for Ubuntu Server
 
 Author
 ----
@@ -127,7 +127,7 @@ Run this script.
 
 That's all and You've done :D
 
-Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon) .
+Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon)  with user: demo, pass: demo.
 
 #### Additional Compute Node
 
