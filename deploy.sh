@@ -123,6 +123,7 @@ EOF
 # set shell environment
 # --------------------------------------------------------------------------------------
 function shell_env() {
+    # create openstackrc for 'admin' user
     echo 'export SERVICE_TOKEN=admin' >> ~/openstackrc
     echo 'export OS_TENANT_NAME=admin' >> ~/openstackrc
     echo 'export OS_USERNAME=admin' >> ~/openstackrc
@@ -135,6 +136,14 @@ function shell_env() {
     export OS_PASSWORD=admin
     export OS_AUTH_URL="http://${KEYSTONE_IP}:5000/v2.0/"
     export SERVICE_ENDPOINT="http://${KEYSTONE_IP}:35357/v2.0"
+
+    # create openstackrc for 'demo' user
+    echo 'export SERVICE_TOKEN=admin' >> ~/openstackrc-demo
+    echo 'export OS_TENANT_NAME=service' >> ~/openstackrc-demo
+    echo 'export OS_USERNAME=demo' >> ~/openstackrc-demo
+    echo 'export OS_PASSWORD=demo' >> ~/openstackrc-demo
+    echo "export OS_AUTH_URL=\"http://${KEYSTONE_IP}:5000/v2.0/\"" >> ~/openstackrc-demo
+    echo "export SERVICE_ENDPOINT=http://${KEYSTONE_IP}:35357/v2.0" >> ~/openstackrc-demo
 }
 
 # --------------------------------------------------------------------------------------
