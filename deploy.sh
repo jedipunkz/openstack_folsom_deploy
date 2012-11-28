@@ -405,7 +405,7 @@ function add_nova_setup() {
         echo "<network_type> must be 'gre' or 'vlan'."
         exit 1
     fi
-    sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
+    sed -e "s#<RABBIT_IP>#${ADD_NOVA_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
     service quantum-plugin-openvswitch-agent restart
     # nova setup
     install_package nova-api-metadata nova-compute-kvm
