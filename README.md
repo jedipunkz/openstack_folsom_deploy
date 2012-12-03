@@ -134,7 +134,8 @@ That's all and You've done :D
 
 Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon)  with user: demo, pass: demo.
 
-#### 3 nodes (controller, network, compute) mode
+How to user : 3 nodes (controller, network, compute) mode
+----
 
 If you have a plan to build separated by function (controller, network,
 compute nodes), please run deploy.sh with 'controller', 'network', 'compute' option.
