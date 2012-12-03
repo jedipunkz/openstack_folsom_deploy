@@ -3,97 +3,19 @@
 #
 # This is openstack bootstrap script code. I tested on Ubuntu Server 12.04 LTS
 # and 12.10. You should set your environment parameters to deploy.conf
-# such as $HOST_IP and MYAQL_PASS and ... more. And now controller or
+# such as $HOST_IP and MYAQL_PASS and ... more. And now controller, network or
 # compute type is only supported. ;) Now I am developing for using on separated 
 # compornent node and separated compute node.
 #
 # Usage : sudo ./deploy.sh <type>
-#   type  : controller | compute | keystone | glance | cinder | horizon
+#   type  : controller | network | compute
 
 set -ex
 
+# include functions
+source ./functions.sh
+# include each paramters
 source ./deploy.conf
-
-# --------------------------------------------------------------------------------------
-# check environment
-# --------------------------------------------------------------------------------------
-function check_env() {
-    if [[ -x $(which lsb_release 2>/dev/null) ]]; then
-        CODENAME=$(lsb_release -c -s)
-        if [[ $CODENAME != "precise" && $CODENAME != "quantal" ]]; then
-            echo "This code was tested on precise and quantal only."
-            exit 1
-        fi
-    else
-        echo "You can run this code on Ubuntu OS only."
-        exit 1
-    fi
-    export CODENAME
-}
-
-# --------------------------------------------------------------------------------------
-# check os vendor
-# --------------------------------------------------------------------------------------
-function check_os() {
-    VENDOR=$(lsb_release -i -s)
-    export VENDER
-}
-
-function check_codename() {
-    VENDOR=$(lsb_release -c -s)
-    export CODENAME
-}
-# --------------------------------------------------------------------------------------
-# package installation function
-# --------------------------------------------------------------------------------------
-function install_package() {
-    apt-get -y install "$@"
-}
-
-# --------------------------------------------------------------------------------------
-# restart function
-# --------------------------------------------------------------------------------------
-function restart_service() {
-    check_os
-    if [[ "$VENDOR" = "Ubuntu" ]]; then
-        sudo /usr/bin/service $1 restart
-    elif [[ "$VENDOR" = "Debian" ]]; then
-        sudo /usr/sbin/service $1 restart
-    else
-        echo "We does not support your distribution."
-        exit 1
-    fi
-}
-
-# --------------------------------------------------------------------------------------
-# restart function
-# --------------------------------------------------------------------------------------
-function start_service() {
-    check_os
-    if [[ "$VENDOR" = "Ubuntu" ]]; then
-        sudo /usr/bin/service $1 start
-    elif [[ "$VENDOR" = "Debian" ]]; then
-        sudo /usr/sbin/service $1 start
-    else
-        echo "We does not support your distribution."
-        exit 1
-    fi
-}
-
-# --------------------------------------------------------------------------------------
-# stop function
-# --------------------------------------------------------------------------------------
-function stop_service() {
-    check_os
-    if [[ "$VENDOR" = "Ubuntu" ]]; then
-        sudo /usr/bin/service $1 stop
-    elif [[ "$VENDOR" = "Debian" ]]; then
-        sudo /usr/sbin/service $1 stop
-    else
-        echo "We does not support your distribution."
-        exit 1
-    fi
-}
 
 # --------------------------------------------------------------------------------------
 # initialize
@@ -130,6 +52,7 @@ function shell_env() {
     echo 'export OS_PASSWORD=admin' >> ~/openstackrc
     echo "export OS_AUTH_URL=\"http://${KEYSTONE_IP}:5000/v2.0/\"" >> ~/openstackrc
     echo "export SERVICE_ENDPOINT=http://${KEYSTONE_IP}:35357/v2.0" >> ~/openstackrc
+    # set ENVs
     export SERVICE_TOKEN=admin
     export OS_TENANT_NAME=admin
     export OS_USERNAME=admin
@@ -300,7 +223,7 @@ function openvswitch_setup() {
 # --------------------------------------------------------------------------------------
 # install quantum
 # --------------------------------------------------------------------------------------
-quantum_setup() {
+function quantum_setup() {
     install_package quantum-server python-cliff python-pyparsing quantum-plugin-openvswitch quantum-plugin-openvswitch-agent quantum-dhcp-agent quantum-l3-agent
     mysql -u root -p${MYSQL_PASS} -e "CREATE DATABASE quantum;"
     mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON quantum.* TO 'quantumUser'@'%' IDENTIFIED BY 'quantumPass';"
@@ -319,6 +242,53 @@ quantum_setup() {
     
     
     restart_service quantum-server
+    restart_service quantum-plugin-openvswitch-agent
+    restart_service quantum-dhcp-agent
+    restart_service quantum-l3-agent
+}
+
+# --------------------------------------------------------------------------------------
+# install quantum for controller node
+# --------------------------------------------------------------------------------------
+function controller_quantum_setup() {
+    install_package quantum-server quantum-plugin-openvswitch
+    mysql -u root -p${MYSQL_PASS} -e "CREATE DATABASE quantum;"
+    mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON quantum.* TO 'quantumUser'@'%' IDENTIFIED BY 'quantumPass';"
+    
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
+    if [[ "$NETWORK_TYPE" = "gre" ]]; then
+        sed -e "s#<QUANTUM_IP>#${CONTROLLER_NODE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    elif [[ "$NETWORK_TYPE" = "vlan" ]]; then
+        sed -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.vlan > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    else
+        echo "<network_type> must be 'gre' or 'vlan'."
+        exit 1
+    fi
+    
+    
+    restart_service quantum-server
+}
+
+# --------------------------------------------------------------------------------------
+# install quantum for network node
+# --------------------------------------------------------------------------------------
+function network_quantum_setup() {
+    install_package mysql-client
+    install_package quantum-plugin-openvswitch-agent quantum-dhcp-agent quantum-l3-agent vlan bridge-utils
+    
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
+    sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
+    if [[ "$NETWORK_TYPE" = "gre" ]]; then
+        sed -e "s#<QUANTUM_IP>#${NETWORK_NODE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    elif [[ "$NETWORK_TYPE" = "vlan" ]]; then
+        sed -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.vlan > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+    else
+        echo "<network_type> must be 'gre' or 'vlan'."
+        exit 1
+    fi
+    
+    
     restart_service quantum-plugin-openvswitch-agent
     restart_service quantum-dhcp-agent
     restart_service quantum-l3-agent
@@ -373,7 +343,7 @@ function nova_setup() {
     mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON nova.* TO 'novaUser'@'%' IDENTIFIED BY 'novaPass';"
     
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_IP>#127.0.0.1#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_NODE_IP>#127.0.0.1#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
     
     chown -R nova. /etc/nova
     chmod 644 /etc/nova/nova.conf
@@ -383,7 +353,25 @@ function nova_setup() {
 }
 
 # --------------------------------------------------------------------------------------
-# install additional nova
+# install nova for controller node
+# --------------------------------------------------------------------------------------
+function controller_nova_setup() {
+    install_package nova-api nova-cert novnc nova-consoleauth nova-scheduler nova-novncproxy rabbitmq-server vlan bridge-utils
+    mysql -u root -p${MYSQL_PASS} -e "CREATE DATABASE nova;"
+    mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON nova.* TO 'novaUser'@'%' IDENTIFIED BY 'novaPass';"
+    
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_NODE_IP>#127.0.0.1#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    
+    chown -R nova. /etc/nova
+    chmod 644 /etc/nova/nova.conf
+    nova-manage db sync
+    cd /etc/init.d/; for i in $( ls nova-* ); do sudo service $i restart; done
+    nova-manage service list
+}
+
+# --------------------------------------------------------------------------------------
+# install additional nova for compute node
 # --------------------------------------------------------------------------------------
 function add_nova_setup() {
     # etc 
@@ -398,19 +386,19 @@ function add_nova_setup() {
     # quantum setup
     install_package quantum-plugin-openvswitch-agent
     if [[ "$NETWORK_TYPE" = "gre" ]]; then
-        sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+        sed -e "s#<QUANTUM_IP>#${COMPUTE_NODE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
     elif [[ "$NETWORK_TYPE" = "vlan" ]]; then
         sed -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.vlan > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
     else
         echo "<network_type> must be 'gre' or 'vlan'."
         exit 1
     fi
-    sed -e "s#<RABBIT_IP>#${ADD_NOVA_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
+    sed -e "s#<RABBIT_IP>#${CONTROLLER_NODE_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
     service quantum-plugin-openvswitch-agent restart
     # nova setup
     install_package nova-api-metadata nova-compute-kvm
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_IP>#${ADD_NOVA_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_NODE_IP>#${COMPUTE_NODE_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
     cp $BASE_DIR/conf/etc.nova/nova-compute.conf /etc/nova/nova-compute.conf
     
     chown -R nova. /etc/nova
@@ -453,7 +441,7 @@ function horizon_setup() {
 # Main Function
 # --------------------------------------------------------------------------------------
 case "$1" in
-    allinone | controller)
+    allinone)
         NOVA_IP=${HOST_IP}
         CINDER_IP=${HOST_IP}
         DB_IP=${HOST_IP}
@@ -473,11 +461,66 @@ case "$1" in
         horizon_setup
         create_network
         ;;
-    add_nova | compute)
+    controller)
+        NOVA_IP=${CONTROLLER_NODE_IP}
+        CINDER_IP=${CONTROLLER_NODE_IP}
+        DB_IP=${CONTROLLER_NODE_IP}
+        KEYSTONE_IP=${CONTROLLER_NODE_IP}
+        GLANCE_IP=${CONTROLLER_NODE_IP}
+        QUANTUM_IP=${CONTROLLER_NODE_IP}
+        RABBIT_IP=${CONTROLLER_NODE_IP}
+        CONTROLLER_NODE_IP=${CONTROLLER_NODE_IP}
+        check_env 
+        shell_env
+        init
+        mysql_setup
+        keystone_setup
+        glance_setup
+        controller_quantum_setup
+        controller_nova_setup
+        cinder_setup
+        horizon_setup
+        ;;
+    network)
+        NOVA_IP=${CONTROLLER_NODE_IP}
+        CINDER_IP=${CONTROLLER_NODE_IP}
+        DB_IP=${CONTROLLER_NODE_IP}
+        KEYSTONE_IP=${CONTROLLER_NODE_IP}
+        GLANCE_IP=${CONTROLLER_NODE_IP}
+        QUANTUM_IP=${CONTROLLER_NODE_IP}
+        RABBIT_IP=${CONTROLLER_NODE_IP}
+        CONTROLLER_NODE_IP=${CONTROLLER_NODE_IP}
+        check_env 
+        shell_env
+        init
+        openvswitch_setup
+        network_quantum_setup
+        ;;
+    compute)
+        NOVA_IP=${CONTROLLER_NODE_IP}
+        CINDER_IP=${CONTROLLER_NODE_IP}
+        DB_IP=${CONTROLLER_NODE_IP}
+        KEYSTONE_IP=${CONTROLLER_NODE_IP}
+        GLANCE_IP=${CONTROLLER_NODE_IP}
+        QUANTUM_IP=${CONTROLLER_NODE_IP}
+        RABBIT_IP=${CONTROLLER_NODE_IP}
+        CONTROLLER_NODE_IP=${CONTROLLER_NODE_IP}
         check_env
         shell_env
         init
         add_nova_setup
+        ;;
+    create_network)
+        NOVA_IP=${CONTROLLER_NODE_IP}
+        CINDER_IP=${CONTROLLER_NODE_IP}
+        DB_IP=${CONTROLLER_NODE_IP}
+        KEYSTONE_IP=${CONTROLLER_NODE_IP}
+        GLANCE_IP=${CONTROLLER_NODE_IP}
+        QUANTUM_IP=${CONTROLLER_NODE_IP}
+        CONTROLLER_NODE_IP=${CONTROLLER_NODE_IP}
+        check_env
+        shell_env
+        create_network
         ;;
     quantum)
         check_env
@@ -513,7 +556,7 @@ case "$1" in
         ;;
     *)
         echo "Usage : sudo ./$0 <compornent>"
-        echo "<conpornent>   : allinone,controller|add_nova,compute|quantum|cinder|keystone|glance|nova|horizon|"
+        echo "<conpornent>   : allinone|controller|network|compute|"
         echo "example) sudo ./deploy.sh controller"
         exit 1
         ;;
