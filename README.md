@@ -43,13 +43,13 @@ interface.
     +--------------------------------------------+------------------+-----------------
     |                                            |                  |
     |                                            |                  |
-    | eth2 172.16.1.13                           | eth2 172.16.1.12 | eth2 172.24.1.11
+    | eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
     +------------+                               +-----------+      +------------+
     |            | eth1 ------------------- eth1 |           |      |            |
     |  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
     |    node    | data segment = 172.16.2.0/24  |   node    |      |    node    |
     +------------+ 172.16.2.13       172.16.2.12 +-----------+      +------------+
-    | eth0 10.200.8.13                                              | eth0 10.200.8.11
+    | eth0 10.200.8.12                                              | eth0 10.200.8.11
     |                                                               |
     |                                                               |
     +--------------------------------------------+------------------+-----------------
@@ -105,10 +105,11 @@ Update these environment in deploy.conf
     HOST_IP='172.16.1.11'
     # controller node
     CONTROLLER_NODE_IP='172.16.1.11'
+    CONTROLLER_NODE_PUB_IP='10.200.8.11'
     # network node
-    NETWORK_NODE_IP='172.16.1.13'
+    NETWORK_NODE_IP='172.16.1.12'
     # compute node
-    COMPUTE_NODE_IP='172.16.1.12'
+    COMPUTE_NODE_IP='172.16.1.13'
     DATA_NIC_COMPUTE='eth1'
     # etc env
     MYSQL_PASS='secret'
@@ -149,10 +150,11 @@ update parameters of deploy.conf.
     HOST_IP='172.16.1.11'
     # controller node
     CONTROLLER_NODE_IP='172.16.1.11'
+    CONTROLLER_NODE_PUB_IP='10.200.8.11'
     # network node
-    NETWORK_NODE_IP='172.16.1.13'
+    NETWORK_NODE_IP='172.16.1.12'
     # compute node
-    COMPUTE_NODE_IP='172.16.1.12'
+    COMPUTE_NODE_IP='172.16.1.13'
     DATA_NIC_COMPUTE='eth1'
     # etc env
     MYSQL_PASS='secret'
@@ -186,8 +188,6 @@ Controller Node's /etc/network/interfaces
 
     auto eth0
     iface eth0 inet static
-        up ifconfig $IFACE 0.0.0.0 up
-        down ifconfig $IFACE down
         address 10.200.8.11
         netmask 255.255.255.0
         dns-nameservers 8.8.8.8 8.8.4.4
@@ -210,7 +210,7 @@ Network Node's /etc/network/interfaces
         up ip link set $IFACE promisc on
         down ip link set $IFACE promisc off
         down ifconfig $IFACE down
-        address 10.200.8.21
+        address 10.200.8.12
         netmask 255.255.255.0
         #gateway 10.200.8.1
         # dns-* options are implemented by the resolvconf package, if installed
@@ -219,12 +219,12 @@ Network Node's /etc/network/interfaces
     
     auto eth1
         iface eth1 inet static
-        address 172.16.2.13
+        address 172.16.2.12
         netmask 255.255.255.0
     
     auto eth2
     iface eth2 inet static
-        address 172.16.1.13
+        address 172.16.1.12
         netmask 255.255.255.0
         gateway 172.16.1.1
     dns-nameservers 8.8.8.8 8.8.4.4
@@ -233,12 +233,12 @@ Compoute Node's /etc/network/interfaces
 
     auto eth1
     iface eth1 inet static
-        address 172.16.2.12
+        address 172.16.2.13
         netmask 255.255.255.0
     
     auto eth2
     iface eth2 inet static
-        address 172.16.1.12
+        address 172.16.1.13
         netmask 255.255.255.0
         gateway 172.16.1.1
         dns-nameservers 8.8.8.8 8.8.4.4
@@ -256,6 +256,16 @@ at last, create network on controller node.
 You've done. Please access http://${CONTROLLER_NODE_IP}/horizon via your
 browser. and create some vm instances. :D
 
+Using Metadata server
+----
+
+VM can get some informations from metadata server on controller node.
+add a routing table to VM range network like this.
+
+    controller% source ~/openstackrc # use admin user
+    controller% quantum router-list  # get route-id
+    controller% quantum port-list -- --device_id <router_id> --device_owner network:router_gateway # get router I/F addr
+    controller% route add -net 172.24.17.0/24 gw <route_if_addr>
 
 Using floating ip
 ----
@@ -285,8 +295,8 @@ Versions and Changelog
 * 2012/11/01 : version 0.1 : First Release.
 * 2012/11/08 : version 0.2 : Supported VLAN mode of quantum.
 * 2012/12/03 : version 0.3 : Supported 3 nodes constitution (controller, network, compute nodes)
+* 2012/12/07 : version 0.4 : Fixed a problem that can not access metadata server from VMs.
 
 Known Issue
 ----
 
-* can not access to the metadata server from your virtual machines.

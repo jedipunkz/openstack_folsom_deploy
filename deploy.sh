@@ -223,13 +223,13 @@ function openvswitch_setup() {
 # --------------------------------------------------------------------------------------
 # install quantum
 # --------------------------------------------------------------------------------------
-function quantum_setup() {
+function allinone_quantum_setup() {
     install_package quantum-server python-cliff python-pyparsing quantum-plugin-openvswitch quantum-plugin-openvswitch-agent quantum-dhcp-agent quantum-l3-agent
     mysql -u root -p${MYSQL_PASS} -e "CREATE DATABASE quantum;"
     mysql -u root -p${MYSQL_PASS} -e "GRANT ALL ON quantum.* TO 'quantumUser'@'%' IDENTIFIED BY 'quantumPass';"
     
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<CONTROLLER_NODE_PUB_IP>#${CONTROLLER_NODE_PUB_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
     sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
     if [[ "$NETWORK_TYPE" = "gre" ]]; then
         sed -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
@@ -277,7 +277,7 @@ function network_quantum_setup() {
     install_package quantum-plugin-openvswitch-agent quantum-dhcp-agent quantum-l3-agent vlan bridge-utils
     
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/api-paste.ini > /etc/quantum/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<CONTROLLER_NODE_PUB_IP>#${CONTROLLER_NODE_PUB_IP}#" $BASE_DIR/conf/etc.quantum/l3_agent.ini > /etc/quantum/l3_agent.ini
     sed -e "s#<RABBIT_IP>#${RABBIT_IP}#" $BASE_DIR/conf/etc.quantum/quantum.conf > /etc/quantum/quantum.conf
     if [[ "$NETWORK_TYPE" = "gre" ]]; then
         sed -e "s#<QUANTUM_IP>#${NETWORK_NODE_IP}#" -e "s#<DB_IP>#${DB_IP}#" $BASE_DIR/conf/etc.quantum.plugins.openvswitch/ovs_quantum_plugin.ini.gre > /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
@@ -455,7 +455,7 @@ case "$1" in
         keystone_setup
         glance_setup
         openvswitch_setup
-        quantum_setup
+        allinone_quantum_setup
         nova_setup
         cinder_setup
         horizon_setup
@@ -521,38 +521,6 @@ case "$1" in
         check_env
         shell_env
         create_network
-        ;;
-    quantum)
-        check_env
-        shell_env
-        quantum_setup
-        create_network
-        ;;
-    cinder)
-        check_env
-        shell_env
-        cinder_setup
-        ;;
-    keystone)
-        check_env
-        shell_env
-        mysql_setup
-        keystone_setup
-        ;;
-    glance)
-        check_env
-        shell_env
-        glance_setup
-        ;;
-    nova)
-        check_env
-        shell_env
-        nova_setup
-        ;;
-    horizon)
-        check_env
-        shell_env
-        horizon_setup
         ;;
     *)
         echo "Usage : sudo ./$0 <compornent>"
