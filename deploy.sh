@@ -524,7 +524,7 @@ case "$1" in
         ;;
     *)
         echo "Usage : sudo ./$0 <compornent>"
-        echo "<conpornent>   : allinone|controller|network|compute|"
+        echo "<conpornent>   : allinone|controller|network|compute|create_network"
         echo "example) sudo ./deploy.sh controller"
         exit 1
         ;;
