@@ -50,6 +50,23 @@ interface.
 
 And you need a disk device (such as /dev/sda6) for cinder service.
 
+
+
+Require Environment with nova-network
+----
+
+If you choose nova-network, it is simple. You need 1 NIC only. And you need a
+disk device (such as /dev/sda6) for cinder service.
+
+
+How to use with quantum
+====
+
+How to use all in one node with quantum
+----
+
+#### Preconfigured Architecture
+
     management segment 172.16.1.0/24
     +---------------------------------------------------------------------------------
     |
@@ -72,69 +89,6 @@ And you need a disk device (such as /dev/sda6) for cinder service.
     +-----------+
 
 fig.1 all in one with quantum
-
-    management segment 172.16.1.0/24
-    +--------------------------------------------+------------------+-----------------
-    |                                            |                  |
-    |                                            |                  |
-    | eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
-    +------------+                               +-----------+      +------------+
-    |            | eth1 ------------------- eth1 |           |      |            |
-    |  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
-    |    node    | data segment = 172.16.2.0/24  |   node    |      |    node    |
-    +------------+ 172.16.2.13       172.16.2.12 +-----------+      +------------+
-    | eth0 10.200.8.12                                              | eth0 10.200.8.11
-    |                                                               |
-    |                                                               |
-    +--------------------------------------------+------------------+-----------------
-    |       public segment 10.200.8.0/24
-    |
-    | 10.200.8.1
-    +-----------+
-    | GW Router |-> The Internet
-    +-----------+
-
-fig.2 separated nodes with quantum
-
-Require Environment with nova-network
-----
-
-If you choose nova-network, it is simple. You need 1 NIC only. And you need a
-disk device (such as /dev/sda6) for cinder service.
-
-                                       +-----------+
-    +----------------------------------| GW Router |-> The Internet
-    |10.200.8.11                       +-----------+
-    |eth0
-    +------------+
-    |            |
-    | all in one |
-    |            |
-    +------------+
-
-fig.3 all in one with nova-network
-
-                                       +-----------+
-    +---------------+------------------| GW Router |-> The Internet
-    |10.200.8.11    |10.200.8.12       +-----------+
-    |eth0           |eth0
-    +------------+  +------------+
-    |            |  |            |
-    | controller |  |  compute   |
-    |            |  |            |
-    +------------+  +------------+
-
-fig.4 separated nodes with nova-network
-
-How to use with quantum
-====
-
-How to use all in one node with quantum
-----
-
-#### Preconfigured Architecture
-
-fig.1
 
 #### Set up network interfaces
 
@@ -213,7 +167,28 @@ How to use 3 nodes (controller, network, compute) mode with quantum
 
 #### Preconfigured Architecture
 
-fig.2
+    management segment 172.16.1.0/24
+    +--------------------------------------------+------------------+-----------------
+    |                                            |                  |
+    |                                            |                  |
+    | eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
+    +------------+                               +-----------+      +------------+
+    |            | eth1 ------------------- eth1 |           |      |            |
+    |  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
+    |    node    | data segment = 172.16.2.0/24  |   node    |      |    node    |
+    +------------+ 172.16.2.13       172.16.2.12 +-----------+      +------------+
+    | eth0 10.200.8.12                                              | eth0 10.200.8.11
+    |                                                               |
+    |                                                               |
+    +--------------------------------------------+------------------+-----------------
+    |       public segment 10.200.8.0/24
+    |
+    | 10.200.8.1
+    +-----------+
+    | GW Router |-> The Internet
+    +-----------+
+
+fig.2 separated nodes with quantum
 
 #### get script
 
@@ -349,7 +324,17 @@ How to use all in one mode with nova-network
 
 #### Preconfigured Architecure
 
-fig.3
+                                       +-----------+
+    +----------------------------------| GW Router |-> The Internet
+    |10.200.8.11                       +-----------+
+    |eth0
+    +------------+
+    |            |
+    | all in one |
+    |            |
+    +------------+
+
+fig.3 all in one with nova-network
 
 #### Set up network interfaces
 
@@ -411,10 +396,20 @@ How to use 2 separated nodes (controller, compute) with nova-network
 
 #### Preconfigured Architecure
 
-fig.4
+                                       +-----------+
+    +---------------+------------------| GW Router |-> The Internet
+    |10.200.8.11    |10.200.8.12       +-----------+
+    |eth0           |eth0
+    +------------+  +------------+
+    |            |  |            |
+    | controller |  |  compute   |
+    |            |  |            |
+    +------------+  +------------+
+
+fig.4 separated nodes with nova-network
 
 
-Set up your network configurations to use static ip address.
+#### Set up network interfaces
 
 controller:/etc/network/interfaces
 
@@ -442,10 +437,14 @@ compute:/etc/network/interfaces
             gateway 10.200.8.1
             dns-nameservers 8.8.8.8 8.8.4.4
 
+#### Clone scripts
+
 Clone this scripts to your target node.
 
     controller% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
     controller% cd openstack_folsom_deploy
+
+#### Edit Parameters
 
 Set up parameters of deploy_with_nova-network.conf.
 
@@ -464,15 +463,20 @@ Set up parameters of deploy_with_nova-network.conf.
     OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
     OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 
+#### Copy scripts
+
 Copy these scripts to compute node.
 
     controller% scp -r openstack_folsom_deploy ${COMPUTE_NODE_IP}:~/
+
+#### Run script
 
 Run this scripts with nova-network option.
 
     controller% sudo ./deploy.sh controller nova-network
     compute   % sudo ./deploy.sh compute nova-network
 
+#### Create netorks
 at last, create network on controller node.
 
     controller% sudo ./deploy.sh create_network nova-network
