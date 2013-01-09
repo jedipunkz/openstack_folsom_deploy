@@ -3,6 +3,8 @@ OpenStack Folsom Installation Bash Script
 
 OpenStack Folsom Installation Bash Script for Ubuntu Server 12.04 or 12.10
 
+In Japanese... <https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_jp.md>
+
 Author
 ----
 Tomokazu Hirai @jedipunkz
