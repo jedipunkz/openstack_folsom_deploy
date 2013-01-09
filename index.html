@@ -31,9 +31,11 @@
         <hr>
 
         <section id="main_content">
-          <h1>OpenStack Folsom Bootstrap Script</h1>
+          <h1>OpenStack Folsom Installation Bash Script</h1>
 
-<p>OpenStack Folsom Bootstrap Script for Ubuntu Server</p>
+<p>OpenStack Folsom Installation Bash Script for Ubuntu Server 12.04 or 12.10</p>
+
+<p>In Japanese... <a href="https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_jp.md">https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_jp.md</a></p>
 
 <h2>Author</h2>
 
@@ -44,18 +46,25 @@ Blog    : <a href="http://jedipunkz.github.com">http://jedipunkz.github.com</a><
 
 <h2>Notice</h2>
 
-<p>This script was tested 'all in one mode' and '3 nodes mode (controller, network, compute).
-Now I'm developing for separated compornent nodes mode. Please wait a moment :D or
-feel FREE for your fork.</p>
+<p>This script was tested ...</p>
+
+<ul>
+<li>all in one node with nova-network</li>
+<li>separated nodes (controller, compute x N) with nova-network</li>
+<li>all in one node with quantum</li>
+<li>separated nodes (controller, network, compute x N) with quantum</li>
+</ul><p>so, now I do not support separated nodes for each service (keystone, glance,
+nova, etc...). If you want to do this with separated nodes mode, please tell
+me or fork it. :D</p>
 
 <h2>Motivation</h2>
 
 <p>devstack is very usefull for me. I am using devstack for understanding
-openstack and especially Quantum ! ;) but when I reboot devstack node, all of
+openstack, especially Quantum ! ;) but when I reboot devstack node, all of
 openstack compornents was not booted. That is not good for me. and I wanted to
-use Ubuntu Cloud Archive packages.</p>
+use Ubuntu Cloud Archive packages or Ubuntu Package with 12.10.</p>
 
-<h2>Premise Environment</h2>
+<h2>Require Environment with quanum</h2>
 
 <p>You need 1 or more node(s) with Ubuntu Server 12.04 LTS / 12.10.</p>
 
@@ -68,17 +77,43 @@ designed based on 3 networks (if you want 4 networks, you can do it with this).
 public/data/management &amp; api. All of APIs will be listening on management networks
 interface.</p>
 
+<p>And you need a disk device (such as /dev/sda6) for cinder service.</p>
+
+<pre><code>management segment 172.16.1.0/24
++---------------------------------------------------------------------------------
+|
+|
+| eth2 172.16.1.11
++------------+
+|            | eth1
+| all in one | vlan/gre seg = 172.24.17.0/24
+|            | data segment = 172.16.2.0/24
++------------+ 172.16.2.11
+| eth0 10.200.8.11
+|
+|
++---------------------------------------------------------------------------------
+|       public segment 10.200.8.0/24
+|
+| 10.200.8.1
++-----------+
+| GW Router |-&gt; The Internet
++-----------+
+</code></pre>
+
+<p>fig.1 all in one with quantum</p>
+
 <pre><code>management segment 172.16.1.0/24
 +--------------------------------------------+------------------+-----------------
 |                                            |                  |
 |                                            |                  |
-| eth2 172.16.1.13                           | eth2 172.16.1.12 | eth2 172.24.1.11
+| eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
 +------------+                               +-----------+      +------------+
 |            | eth1 ------------------- eth1 |           |      |            |
 |  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
 |    node    | data segment = 172.16.2.0/24  |   node    |      |    node    |
 +------------+ 172.16.2.13       172.16.2.12 +-----------+      +------------+
-| eth0 10.200.8.13                                              | eth0 10.200.8.11
+| eth0 10.200.8.12                                              | eth0 10.200.8.11
 |                                                               |
 |                                                               |
 +--------------------------------------------+------------------+-----------------
@@ -90,19 +125,62 @@ interface.</p>
 +-----------+
 </code></pre>
 
-<p>so you should setup each NICs like this. this is /etc/network/interface</p>
+<p>fig.2 separated nodes with quantum</p>
 
-<p>You can install and manage openstack via eth2 NiC. When you run this script,
-openvswitch will adding eth0 and eth1 for bridge interfaces.</p>
+<h2>Require Environment with nova-network</h2>
 
-<pre><code>auto lo
+<p>If you choose nova-network, it is simple. You need 1 NIC only. And you need a
+disk device (such as /dev/sda6) for cinder service.</p>
+
+<pre><code>                                   +-----------+
++----------------------------------| GW Router |-&gt; The Internet
+|10.200.8.11                       +-----------+
+|eth0
++------------+
+|            |
+| all in one |
+|            |
++------------+
+</code></pre>
+
+<p>fig.3 all in one with nova-network</p>
+
+<pre><code>                                   +-----------+
++---------------+------------------| GW Router |-&gt; The Internet
+|10.200.8.11    |10.200.8.12       +-----------+
+|eth0           |eth0
++------------+  +------------+
+|            |  |            |
+| controller |  |  compute   |
+|            |  |            |
++------------+  +------------+
+</code></pre>
+
+<p>fig.4 separated nodes with nova-network</p>
+
+<h1>How to use with quantum</h1>
+
+<h2>How to use all in one node with quantum</h2>
+
+<h4>Preconfigured Architecture</h4>
+
+<p>fig.1</p>
+
+<h4>Set up network interfaces</h4>
+
+<p>Set up network configuration.</p>
+
+<pre><code>% sudo vim /etc/network/interfaces
+auto lo
 iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
     up ifconfig $IFACE 0.0.0.0 up
+    up ip link set $IFACE promisc on
+    down ip link set $IFACE promisc off
     down ifconfig $IFACE down
-    address 10.200.8.11
+    address 10.200.8.16
     netmask 255.255.255.0
     dns-nameservers 8.8.8.8 8.8.4.4
     dns-search cpi.ad.jp
@@ -117,56 +195,60 @@ iface eth2 inet static
     address 172.16.1.11
     netmask 255.255.255.0
     gateway 172.16.1.1
+    dns-nameservers 8.8.8.8 8.8.4.4
+% sudo /etc/init.d/networking restart
 </code></pre>
 
-<p>and Especialy you need to have a disk device for cinder such as /dev/sda6.</p>
-
-<h2>How to use (all in one mode)</h2>
-
-<p>get script to your target.</p>
+<p>Clone this scripts to your target node.</p>
 
 <pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 % cd openstack_folsom_deploy
 </code></pre>
 
-<p>Update these environment in deploy.conf</p>
+<h4>Edit parameters</h4>
 
-<pre><code># for all in one mode
+<p>Update these environment in deploy_with_quantum.conf</p>
+
+<pre><code>BASE_DIR=`pwd`
 HOST_IP='172.16.1.11'
-# controller node
-CONTROLLER_NODE_IP='172.16.1.11'
-# network node
-NETWORK_NODE_IP='172.16.1.13'
-# compute node
-COMPUTE_NODE_IP='172.16.1.12'
-DATA_NIC_COMPUTE='eth1'
-# etc env
+HOST_PUB_IP='10.200.8.11'
+
 MYSQL_PASS='secret'
 CINDER_VOLUME='/dev/sda6'
 DATA_NIC='eth1'
 PUBLIC_NIC='eth0'
-# network_type : gre or vlan
-NETWORK_TYPE='gre'
 
-# quantun env
+NETWORK_TYPE='gre'
 INT_NET_GATEWAY='172.24.17.254'
 INT_NET_RANGE='172.24.17.0/24'
 EXT_NET_GATEWAY='10.200.8.1'
 EXT_NET_START='10.200.8.36'
 EXT_NET_END='10.200.8.40'
 EXT_NET_RANGE='10.200.8.0/24'
+
+OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 </code></pre>
+
+<h4>Run script</h4>
 
 <p>Run this script.</p>
 
-<pre><code>% sudo ./deploy.sh allinone
+<pre><code>% sudo ./deploy.sh allinone quantum # wait some minutes...
+% sudo ./deploy.sh create_network quantum
 </code></pre>
 
 <p>That's all and You've done :D</p>
 
 <p>Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon)  with user: demo, pass: demo.</p>
 
-<h2>How to user : 3 nodes (controller, network, compute) mode</h2>
+<h2>How to use 3 nodes (controller, network, compute) mode with quantum</h2>
+
+<h4>Preconfigured Architecture</h4>
+
+<p>fig.2</p>
+
+<h4>get script</h4>
 
 <p>If you have a plan to build separated by function (controller, network,
 compute nodes), please run deploy.sh with 'controller', 'network', 'compute' option.
@@ -175,26 +257,23 @@ Parameters of deploy.conf must be same as controller's one.</p>
 <pre><code>controller% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 </code></pre>
 
-<p>update parameters of deploy.conf.</p>
+<h4>Edit parameters</h4>
 
-<pre><code># for all in one mode
-HOST_IP='172.16.1.11'
-# controller node
+<p>Update parameters of deploy_with_quantum.conf</p>
+
+<pre><code>BASE_DIR=`pwd`
 CONTROLLER_NODE_IP='172.16.1.11'
-# network node
-NETWORK_NODE_IP='172.16.1.13'
-# compute node
-COMPUTE_NODE_IP='172.16.1.12'
+CONTROLLER_NODE_PUB_IP='10.200.8.11'
+NETWORK_NODE_IP='172.16.1.12'
+COMPUTE_NODE_IP='172.16.1.13'
 DATA_NIC_COMPUTE='eth1'
-# etc env
+
 MYSQL_PASS='secret'
 CINDER_VOLUME='/dev/sda6'
 DATA_NIC='eth1'
 PUBLIC_NIC='eth0'
-# network_type : gre or vlan
-NETWORK_TYPE='gre'
 
-# quantun env
+NETWORK_TYPE='gre'
 INT_NET_GATEWAY='172.24.17.254'
 INT_NET_RANGE='172.24.17.0/24'
 EXT_NET_GATEWAY='10.200.8.1'
@@ -202,6 +281,11 @@ EXT_NET_START='10.200.8.36'
 EXT_NET_END='10.200.8.40'
 EXT_NET_RANGE='10.200.8.0/24'
 </code></pre>
+
+<p>OS_IMAGE_URL="<a href="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img">https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img</a>"
+OS_IMAGE_NAME="Cirros 0.3.0 x86_64"</p>
+
+<h4>copy to other nodes</h4>
 
 <p>copy directory to network node and compute node.</p>
 
@@ -220,8 +304,6 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-    up ifconfig $IFACE 0.0.0.0 up
-    down ifconfig $IFACE down
     address 10.200.8.11
     netmask 255.255.255.0
     dns-nameservers 8.8.8.8 8.8.4.4
@@ -245,7 +327,7 @@ iface eth0 inet static
     up ip link set $IFACE promisc on
     down ip link set $IFACE promisc off
     down ifconfig $IFACE down
-    address 10.200.8.21
+    address 10.200.8.12
     netmask 255.255.255.0
     #gateway 10.200.8.1
     # dns-* options are implemented by the resolvconf package, if installed
@@ -254,12 +336,12 @@ iface eth0 inet static
 
 auto eth1
     iface eth1 inet static
-    address 172.16.2.13
+    address 172.16.2.12
     netmask 255.255.255.0
 
 auto eth2
 iface eth2 inet static
-    address 172.16.1.13
+    address 172.16.1.12
     netmask 255.255.255.0
     gateway 172.16.1.1
 dns-nameservers 8.8.8.8 8.8.4.4
@@ -269,31 +351,192 @@ dns-nameservers 8.8.8.8 8.8.4.4
 
 <pre><code>auto eth1
 iface eth1 inet static
-    address 172.16.2.12
+    address 172.16.2.13
     netmask 255.255.255.0
 
 auto eth2
 iface eth2 inet static
-    address 172.16.1.12
+    address 172.16.1.13
     netmask 255.255.255.0
     gateway 172.16.1.1
     dns-nameservers 8.8.8.8 8.8.4.4
 </code></pre>
 
+<h4>Run this script</h4>
+
 <p>Deploy OpenStack for each compornent.</p>
 
-<pre><code>controller% sudo ./deploy.sh controller
-network   % sudo ./deploy.sh network
-compute   % sudo ./deploy.sh compute
+<pre><code>controller% sudo ./deploy.sh controller quantum
+network   % sudo ./deploy.sh network quantum
+compute   % sudo ./deploy.sh compute quntum
+</code></pre>
+
+<h4>Create network</h4>
+
+<p>at last, create network on controller node.</p>
+
+<pre><code>controller% sudo ./deploy.sh create_network quntum
+</code></pre>
+
+<p>You've done. Please access http://${CONTROLLER_NODE_IP}/horizon via your
+browser with user: demo, pass: demo.</p>
+
+<h1>How to use with nova-network</h1>
+
+<h2>How to use all in one mode with nova-network</h2>
+
+<h4>Preconfigured Architecure</h4>
+
+<p>fig.3</p>
+
+<h4>Set up network interfaces</h4>
+
+<p>Set up your network configurations to use static ip address.</p>
+
+<pre><code>% sudo vim /etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+        address 10.200.8.11
+        netmask 255.255.255.0
+        gateway 10.200.8.1
+        dns-nameservers 8.8.8.8 8.8.4.4
+</code></pre>
+
+<h4>get scripts</h4>
+
+<p>Clone this scripts to your target node.</p>
+
+<pre><code>% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+% cd openstack_folsom_deploy
+</code></pre>
+
+<h4>Edit parameters</h4>
+
+<p>Set up parameters of deploy_with_nova-network.conf</p>
+
+<pre><code>BASE_DIR=`pwd`
+HOST_IP='10.200.8.11'
+
+MYSQL_PASS='secret'
+CINDER_VOLUME='/dev/sda6'
+
+FIXED_RANGE="10.0.0.0/24"
+FIXED_START_ADDR="10.0.0.2"
+FLOATING_RANGE="10.200.8.28/30"
+NETWORK_SIZE="256"
+
+OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
+</code></pre>
+
+<h4>Run this script</h4>
+
+<p>Run this script with nova-network option.</p>
+
+<pre><code>% sudo ./deploy.sh allinone nova-network
+</code></pre>
+
+<h4>Create network</h4>
+
+<p>create fixed, floating range networks.</p>
+
+<pre><code>% sudo ./deploy.sh create_network nova-network
+</code></pre>
+
+<p>That's done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
+with user : demo, pass : demo</p>
+
+<h2>How to use 2 separated nodes (controller, compute) with nova-network</h2>
+
+<h4>Preconfigured Architecure</h4>
+
+<p>fig.4</p>
+
+<p>Set up your network configurations to use static ip address.</p>
+
+<p>controller:/etc/network/interfaces</p>
+
+<pre><code>controller% sudo vim /etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+        address 10.200.8.11
+        netmask 255.255.255.0
+        gateway 10.200.8.1
+        dns-nameservers 8.8.8.8 8.8.4.4
+</code></pre>
+
+<p>compute:/etc/network/interfaces</p>
+
+<pre><code>compute% sudo vim /etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+        address 10.200.8.12
+        netmask 255.255.255.0
+        gateway 10.200.8.1
+        dns-nameservers 8.8.8.8 8.8.4.4
+</code></pre>
+
+<p>Clone this scripts to your target node.</p>
+
+<pre><code>controller% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+controller% cd openstack_folsom_deploy
+</code></pre>
+
+<p>Set up parameters of deploy_with_nova-network.conf.</p>
+
+<pre><code>BASE_DIR=`pwd`
+CONTROLLER_NODE_IP='10.200.8.11'
+COMPUTE_NODE_IP='10.200.8.12'
+
+MYSQL_PASS='secret'
+CINDER_VOLUME='/dev/sda6'
+
+FIXED_RANGE="10.0.0.0/24"
+FIXED_START_ADDR="10.0.0.2"
+FLOATING_RANGE="10.200.8.28/30"
+NETWORK_SIZE="256"
+
+OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
+</code></pre>
+
+<p>Copy these scripts to compute node.</p>
+
+<pre><code>controller% scp -r openstack_folsom_deploy ${COMPUTE_NODE_IP}:~/
+</code></pre>
+
+<p>Run this scripts with nova-network option.</p>
+
+<pre><code>controller% sudo ./deploy.sh controller nova-network
+compute   % sudo ./deploy.sh compute nova-network
 </code></pre>
 
 <p>at last, create network on controller node.</p>
 
-<pre><code>controller% sudo ./deploy.sh create_network
+<pre><code>controller% sudo ./deploy.sh create_network nova-network
 </code></pre>
 
-<p>You've done. Please access http://${CONTROLLER_NODE_IP}/horizon via your
-browser. and create some vm instances. :D</p>
+<p>Now you can access to Horizon with this URL http://${CONTROLLER_NODE_IP}/horizon</p>
+
+<h2>Using Metadata server with quantum</h2>
+
+<p>VM can get some informations from metadata server on controller node.
+add a routing table to VM range network like this.</p>
+
+<pre><code>controller% source ~/openstackrc # use admin user
+controller% quantum router-list  # get route-id
+controller% quantum port-list -- --device_id &lt;router_id&gt; --device_owner network:router_gateway # get router I/F addr
+controller% route add -net 172.24.17.0/24 gw &lt;route_if_addr&gt;
+</code></pre>
 
 <h2>Using floating ip</h2>
 
@@ -307,27 +550,15 @@ browser. and create some vm instances. :D</p>
 % quantum floatingip-associate &lt;floatingip_id&gt; &lt;vm_port_id&gt;
 </code></pre>
 
-<h2>Enabling to access to VMs</h2>
-
-<p>If you want to access to VMs from anyware, do these operation.</p>
-
-<pre><code>% source $HOME/openstackrc
-% nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
-% nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
-% nova secgroup-list-rules default
-</code></pre>
-
 <h2>Versions and Changelog</h2>
 
 <ul>
 <li>2012/11/01 : version 0.1 : First Release.</li>
 <li>2012/11/08 : version 0.2 : Supported VLAN mode of quantum.</li>
 <li>2012/12/03 : version 0.3 : Supported 3 nodes constitution (controller, network, compute nodes)</li>
+<li>2012/12/07 : version 0.4 : Fixed a problem that can not access metadata server from VMs.</li>
+<li>2013/01/09 : version 0.5 : support nova-network</li>
 </ul><h2>Known Issue</h2>
-
-<ul>
-<li>can not access to the metadata server from your virtual machines.</li>
-</ul>
         </section>
 
         <footer>
