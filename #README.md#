@@ -49,29 +49,6 @@ interface.
 And you need a disk device (such as /dev/sda6) for cinder service.
 
     management segment 172.16.1.0/24
-    +---------------------------------------------------------------------------------
-    |
-    |
-    | eth2 172.16.1.11
-    +------------+
-    |            | eth1
-    | all in one | vlan/gre seg = 172.24.17.0/24
-    |            | data segment = 172.16.2.0/24
-    +------------+ 172.16.2.11
-    | eth0 10.200.8.11
-    |
-    |
-    +---------------------------------------------------------------------------------
-    |       public segment 10.200.8.0/24
-    |
-    | 10.200.8.1
-    +-----------+
-    | GW Router |-> The Internet
-    +-----------+
-
-fig.1 all in one with quantum
-
-    management segment 172.16.1.0/24
     +--------------------------------------------+------------------+-----------------
     |                                            |                  |
     |                                            |                  |
@@ -92,8 +69,6 @@ fig.1 all in one with quantum
     | GW Router |-> The Internet
     +-----------+
 
-fig.2 separated nodes with quantum
-
 Require Environment with nova-network
 ----
 
@@ -101,17 +76,16 @@ If you choose nova-network, it is simple. You need 1 NIC only. And you need a
 disk device (such as /dev/sda6) for cinder service.
 
                                        +-----------+
-    +----------------------------------| GW Router |-> The Internet
-    |10.200.8.11                       +-----------+
-    |eth0
-    +------------+
-    |            |
-    | all in one |
-    |            |
-    +------------+
-
-fig.3 all in one with nova-network
-
+                                           +----------------------------------|
+                                           GW Router |-> The Internet
+                                               |10.200.8.11
+                                           +-----------+
+                                               |eth0
+                                                   +------------+
+                                                       |            |
+                                                           | all in one |
+                                                               |            |
+                                                                   +------------+
                                        +-----------+
     +---------------+------------------| GW Router |-> The Internet
     |10.200.8.11    |10.200.8.12       +-----------+
@@ -122,19 +96,11 @@ fig.3 all in one with nova-network
     |            |  |            |
     +------------+  +------------+
 
-fig.4 separated nodes with nova-network
-
 How to use with quantum
 ====
 
 How to use all in one node with quantum
 ----
-
-#### Preconfigured Architecture
-
-fig.1
-
-#### Set up network interfaces
 
 Set up network configuration.
 
@@ -171,8 +137,6 @@ Clone this scripts to your target node.
     % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
     % cd openstack_folsom_deploy
 
-#### Edit parameters
-
 Update these environment in deploy_with_quantum.conf
 
     BASE_DIR=`pwd`
@@ -195,8 +159,6 @@ Update these environment in deploy_with_quantum.conf
     OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
     OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 
-#### Run script
-
 Run this script.
 
 	% sudo ./deploy.sh allinone quantum # wait some minutes...
@@ -209,19 +171,11 @@ Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon)  with use
 How to use 3 nodes (controller, network, compute) mode with quantum
 ----
 
-#### Preconfigured Architecture
-
-fig.2
-
-#### get script
-
 If you have a plan to build separated by function (controller, network,
 compute nodes), please run deploy.sh with 'controller', 'network', 'compute' option.
 Parameters of deploy.conf must be same as controller's one.
 
     controller% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
-
-#### Edit parameters
 
 Update parameters of deploy_with_quantum.conf
 
@@ -248,8 +202,6 @@ Update parameters of deploy_with_quantum.conf
 OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
 OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 
-
-#### copy to other nodes
 
 copy directory to network node and compute node.
     
@@ -322,16 +274,12 @@ Compoute Node's /etc/network/interfaces
         gateway 172.16.1.1
         dns-nameservers 8.8.8.8 8.8.4.4
 
-#### Run this script
-
 Deploy OpenStack for each compornent.
 
     controller% sudo ./deploy.sh controller quantum
     network   % sudo ./deploy.sh network quantum
     compute   % sudo ./deploy.sh compute quntum
     
-#### Create network
-
 at last, create network on controller node.
 
     controller% sudo ./deploy.sh create_network quntum
@@ -344,12 +292,6 @@ How to use with nova-network
 
 How to use all in one mode with nova-network
 ----
-
-#### Preconfigured Architecure
-
-fig.3
-
-#### Set up network interfaces
 
 Set up your network configurations to use static ip address.
 
@@ -364,14 +306,10 @@ Set up your network configurations to use static ip address.
             gateway 10.200.8.1
             dns-nameservers 8.8.8.8 8.8.4.4
 
-#### get scripts
-
 Clone this scripts to your target node.
 
     % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
     % cd openstack_folsom_deploy
-
-#### Edit parameters
 
 Set up parameters of deploy_with_nova-network.conf
 
@@ -389,28 +327,18 @@ Set up parameters of deploy_with_nova-network.conf
     OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
     OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 
-#### Run this script
-
 Run this script with nova-network option.
 
     % sudo ./deploy.sh allinone nova-network
-
-#### Create network
 
 create fixed, floating range networks.
 
     % sudo ./deploy.sh create_network nova-network
 
 That's done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
-with user : demo, pass : demo
 
 How to use 2 separated nodes (controller, compute) with nova-network
 ----
-
-#### Preconfigured Architecure
-
-fig.4
-
 
 Set up your network configurations to use static ip address.
 
