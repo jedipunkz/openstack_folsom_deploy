@@ -27,6 +27,21 @@ function check_codename() {
     VENDOR=$(lsb_release -c -s)
     export CODENAME
 }
+
+# --------------------------------------------------------------------------------------
+# get field function
+# --------------------------------------------------------------------------------------
+function get_field() {
+    while read data; do
+        if [ "$1" -lt 0 ]; then
+            field="(\$(NF$1))"
+        else
+            field="\$$(($1 + 1))"
+        fi
+        echo "$data" | awk -F'[ \t]*\\|[ \t]*' "{print $field}"
+    done
+}
+
 # --------------------------------------------------------------------------------------
 # package installation function
 # --------------------------------------------------------------------------------------
@@ -75,6 +90,24 @@ function stop_service() {
         sudo /usr/sbin/service $1 stop
     else
         echo "We does not support your distribution."
+        exit 1
+    fi
+}
+
+# --------------------------------------------------------------------------------------
+# print syntax
+# --------------------------------------------------------------------------------------
+function print_syntax() {
+    cat ./usage
+    exit 1
+}
+
+# --------------------------------------------------------------------------------------
+# check parameter
+# --------------------------------------------------------------------------------------
+function check_para() {
+    if [ ! "$1" ]; then
+        echo "This paramter $1 is not available."
         exit 1
     fi
 }

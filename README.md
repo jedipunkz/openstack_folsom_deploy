@@ -1,7 +1,7 @@
-OpenStack Folsom Bootstrap Script
+OpenStack Folsom Installation Bash Script
 =======================
 
-OpenStack Folsom Bootstrap Script for Ubuntu Server
+OpenStack Folsom Installation Bash Script for Ubuntu Server 12.04 or 12.10
 
 Author
 ----
@@ -13,19 +13,26 @@ Blog    : <http://jedipunkz.github.com>
 Notice
 ----
 
-This script was tested 'all in one mode' and '3 nodes mode (controller, network, compute).
-Now I'm developing for separated compornent nodes mode. Please wait a moment :D or
-feel FREE for your fork.
+This script was tested ...
+
+* all in one node with nova-network
+* separated nodes (controller, compute x N) with nova-network
+* all in one node with quantum
+* separated nodes (controller, network, compute x N) with quantum
+
+so, now I do not support separated nodes for each service (keystone, glance,
+nova, etc...). If you want to do this with separated nodes mode, please tell
+me or fork it. :D
 
 Motivation
 ----
 
 devstack is very usefull for me. I am using devstack for understanding
-openstack and especially Quantum ! ;) but when I reboot devstack node, all of
+openstack, especially Quantum ! ;) but when I reboot devstack node, all of
 openstack compornents was not booted. That is not good for me. and I wanted to
-use Ubuntu Cloud Archive packages.
+use Ubuntu Cloud Archive packages or Ubuntu Package with 12.10.
 
-Premise Environment
+Require Environment with quanum
 ----
 
 You need 1 or more node(s) with Ubuntu Server 12.04 LTS / 12.10.
@@ -38,6 +45,8 @@ Quantum was designed based on 4 networks, public/data/management/api. This scrip
 designed based on 3 networks (if you want 4 networks, you can do it with this).
 public/data/management & api. All of APIs will be listening on management networks
 interface.
+
+And you need a disk device (such as /dev/sda6) for cinder service.
 
     management segment 172.16.1.0/24
     +--------------------------------------------+------------------+-----------------
@@ -60,20 +69,41 @@ interface.
     | GW Router |-> The Internet
     +-----------+
 
-so you should setup each NICs like this. this is /etc/network/interface
+Require Environment with nova-network
+----
 
+If you choose nova-network, it is simple. You need 1 NIC only. And you need a
+disk device (such as /dev/sda6) for cinder service.
 
-You can install and manage openstack via eth2 NiC. When you run this script,
-openvswitch will adding eth0 and eth1 for bridge interfaces.
+                                       +-----------+
+    +---------------+------------------| GW Router |-> The Internet
+    |10.200.8.11    |10.200.8.12       +-----------+
+    |eth0           |eth0
+    +------------+  +------------+
+    |            |  |            |
+    | controller |  |  compute   |
+    |            |  |            |
+    +------------+  +------------+
 
+How to use with quantum
+====
+
+How to use all in one node with quantum
+----
+
+Set up network configuration.
+
+    % sudo vim /etc/network/interfaces
     auto lo
     iface lo inet loopback
-
+    
     auto eth0
     iface eth0 inet static
         up ifconfig $IFACE 0.0.0.0 up
+        up ip link set $IFACE promisc on
+        down ip link set $IFACE promisc off
         down ifconfig $IFACE down
-        address 10.200.8.11
+        address 10.200.8.16
         netmask 255.255.255.0
         dns-nameservers 8.8.8.8 8.8.4.4
         dns-search cpi.ad.jp
@@ -88,54 +118,46 @@ openvswitch will adding eth0 and eth1 for bridge interfaces.
         address 172.16.1.11
         netmask 255.255.255.0
         gateway 172.16.1.1
+        dns-nameservers 8.8.8.8 8.8.4.4
+    % sudo /etc/init.d/networking restart
 
-and Especialy you need to have a disk device for cinder such as /dev/sda6.
-
-How to use (all in one mode)
-----
-
-get script to your target.
+Clone this scripts to your target node.
 
     % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
     % cd openstack_folsom_deploy
 
-Update these environment in deploy.conf
+Update these environment in deploy_with_quantum.conf
 
-    # for all in one mode
+    BASE_DIR=`pwd`
     HOST_IP='172.16.1.11'
-    # controller node
-    CONTROLLER_NODE_IP='172.16.1.11'
-    CONTROLLER_NODE_PUB_IP='10.200.8.11'
-    # network node
-    NETWORK_NODE_IP='172.16.1.12'
-    # compute node
-    COMPUTE_NODE_IP='172.16.1.13'
-    DATA_NIC_COMPUTE='eth1'
-    # etc env
+    HOST_PUB_IP='10.200.8.11'
+    
     MYSQL_PASS='secret'
     CINDER_VOLUME='/dev/sda6'
     DATA_NIC='eth1'
     PUBLIC_NIC='eth0'
-    # network_type : gre or vlan
-    NETWORK_TYPE='gre'
     
-    # quantun env
+    NETWORK_TYPE='gre'
     INT_NET_GATEWAY='172.24.17.254'
     INT_NET_RANGE='172.24.17.0/24'
     EXT_NET_GATEWAY='10.200.8.1'
     EXT_NET_START='10.200.8.36'
     EXT_NET_END='10.200.8.40'
     EXT_NET_RANGE='10.200.8.0/24'
+    
+    OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+    OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 
 Run this script.
 
-	% sudo ./deploy.sh allinone
+	% sudo ./deploy.sh allinone quantum # wait some minutes...
+    % sudo ./deploy.sh create_network quantum
 
 That's all and You've done :D
 
 Now you can create and boot VMs on Horizon (http://${HOST_IP}/horizon)  with user: demo, pass: demo.
 
-How to user : 3 nodes (controller, network, compute) mode
+How to use 3 nodes (controller, network, compute) mode with quantum
 ----
 
 If you have a plan to build separated by function (controller, network,
@@ -144,33 +166,31 @@ Parameters of deploy.conf must be same as controller's one.
 
     controller% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 
-update parameters of deploy.conf.
+Update parameters of deploy_with_quantum.conf
 
-    # for all in one mode
-    HOST_IP='172.16.1.11'
-    # controller node
+    BASE_DIR=`pwd`
     CONTROLLER_NODE_IP='172.16.1.11'
     CONTROLLER_NODE_PUB_IP='10.200.8.11'
-    # network node
     NETWORK_NODE_IP='172.16.1.12'
-    # compute node
     COMPUTE_NODE_IP='172.16.1.13'
     DATA_NIC_COMPUTE='eth1'
-    # etc env
+    
     MYSQL_PASS='secret'
     CINDER_VOLUME='/dev/sda6'
     DATA_NIC='eth1'
     PUBLIC_NIC='eth0'
-    # network_type : gre or vlan
-    NETWORK_TYPE='gre'
     
-    # quantun env
+    NETWORK_TYPE='gre'
     INT_NET_GATEWAY='172.24.17.254'
     INT_NET_RANGE='172.24.17.0/24'
     EXT_NET_GATEWAY='10.200.8.1'
     EXT_NET_START='10.200.8.36'
     EXT_NET_END='10.200.8.40'
     EXT_NET_RANGE='10.200.8.0/24'
+
+OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
+
 
 copy directory to network node and compute node.
     
@@ -245,18 +265,136 @@ Compoute Node's /etc/network/interfaces
 
 Deploy OpenStack for each compornent.
 
-    controller% sudo ./deploy.sh controller
-    network   % sudo ./deploy.sh network
-    compute   % sudo ./deploy.sh compute
+    controller% sudo ./deploy.sh controller quantum
+    network   % sudo ./deploy.sh network quantum
+    compute   % sudo ./deploy.sh compute quntum
     
 at last, create network on controller node.
 
-    controller% sudo ./deploy.sh create_network
+    controller% sudo ./deploy.sh create_network quntum
 
 You've done. Please access http://${CONTROLLER_NODE_IP}/horizon via your
-browser. and create some vm instances. :D
+browser with user: demo, pass: demo.
 
-Using Metadata server
+How to use with nova-network
+====
+
+How to use all in one mode with nova-network
+----
+
+Set up your network configurations to use static ip address.
+
+    % sudo vim /etc/network/interfaces
+    auto lo
+    iface lo inet loopback
+    
+    auto eth0
+    iface eth0 inet static
+            address 10.200.8.11
+            netmask 255.255.255.0
+            gateway 10.200.8.1
+            dns-nameservers 8.8.8.8 8.8.4.4
+
+Clone this scripts to your target node.
+
+    % git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+    % cd openstack_folsom_deploy
+
+Set up parameters of deploy_with_nova-network.conf
+
+    BASE_DIR=`pwd`
+    HOST_IP='10.200.8.11'
+    
+    MYSQL_PASS='secret'
+    CINDER_VOLUME='/dev/sda6'
+    
+    FIXED_RANGE="10.0.0.0/24"
+    FIXED_START_ADDR="10.0.0.2"
+    FLOATING_RANGE="10.200.8.28/30"
+    NETWORK_SIZE="256"
+    
+    OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+    OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
+
+Run this script with nova-network option.
+
+    % sudo ./deploy.sh allinone nova-network
+
+create fixed, floating range networks.
+
+    % sudo ./deploy.sh create_network nova-network
+
+That's done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
+
+How to use 2 separated nodes (controller, compute) with nova-network
+----
+
+Set up your network configurations to use static ip address.
+
+controller:/etc/network/interfaces
+
+    controller% sudo vim /etc/network/interfaces
+    auto lo
+    iface lo inet loopback
+
+    auto eth0
+    iface eth0 inet static
+            address 10.200.8.11
+            netmask 255.255.255.0
+            gateway 10.200.8.1
+            dns-nameservers 8.8.8.8 8.8.4.4
+
+compute:/etc/network/interfaces
+
+    compute% sudo vim /etc/network/interfaces
+    auto lo
+    iface lo inet loopback
+
+    auto eth0
+    iface eth0 inet static
+            address 10.200.8.12
+            netmask 255.255.255.0
+            gateway 10.200.8.1
+            dns-nameservers 8.8.8.8 8.8.4.4
+
+Clone this scripts to your target node.
+
+    controller% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
+    controller% cd openstack_folsom_deploy
+
+Set up parameters of deploy_with_nova-network.conf.
+
+    BASE_DIR=`pwd`
+    CONTROLLER_NODE_IP='10.200.8.11'
+    COMPUTE_NODE_IP='10.200.8.12'
+    
+    MYSQL_PASS='secret'
+    CINDER_VOLUME='/dev/sda6'
+    
+    FIXED_RANGE="10.0.0.0/24"
+    FIXED_START_ADDR="10.0.0.2"
+    FLOATING_RANGE="10.200.8.28/30"
+    NETWORK_SIZE="256"
+    
+    OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+    OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
+
+Copy these scripts to compute node.
+
+    controller% scp -r openstack_folsom_deploy ${COMPUTE_NODE_IP}:~/
+
+Run this scripts with nova-network option.
+
+    controller% sudo ./deploy.sh controller nova-network
+    compute   % sudo ./deploy.sh compute nova-network
+
+at last, create network on controller node.
+
+    controller% sudo ./deploy.sh create_network nova-network
+
+Now you can access to Horizon with this URL http://${CONTROLLER_NODE_IP}/horizon
+
+Using Metadata server with quantum
 ----
 
 VM can get some informations from metadata server on controller node.
@@ -279,16 +417,6 @@ If you want to use floating ip, do these operation.
 	% quantum port-list
 	% quantum floatingip-associate <floatingip_id> <vm_port_id>
 
-Enabling to access to VMs
-----
-
-If you want to access to VMs from anyware, do these operation.
-
-    % source $HOME/openstackrc
-	% nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
-	% nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
-	% nova secgroup-list-rules default
-
 Versions and Changelog
 ----
 
@@ -296,6 +424,7 @@ Versions and Changelog
 * 2012/11/08 : version 0.2 : Supported VLAN mode of quantum.
 * 2012/12/03 : version 0.3 : Supported 3 nodes constitution (controller, network, compute nodes)
 * 2012/12/07 : version 0.4 : Fixed a problem that can not access metadata server from VMs.
+* 2013/01/09 : version 0.5 : support nova-network
 
 Known Issue
 ----
