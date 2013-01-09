@@ -662,7 +662,6 @@ elif [[ "$2" = "quantum" ]]; then
             GLANCE_IP=${CONTROLLER_NODE_IP};   check_para ${GLANCE_IP}
             QUANTUM_IP=${CONTROLLER_NODE_IP};  check_para ${QUANTUM_IP}
             RABBIT_IP=${CONTROLLER_NODE_IP};   check_para ${RABBIT_IP}
-            #CONTROLLER_NODE_IP=${CONTROLLER_NODE_IP}
             check_env 
             shell_env
             init
@@ -683,7 +682,6 @@ elif [[ "$2" = "quantum" ]]; then
             GLANCE_IP=${CONTROLLER_NODE_IP};   check_para ${GLANCE_IP}
             QUANTUM_IP=${CONTROLLER_NODE_IP};  check_para ${QUANTUM_IP}
             RABBIT_IP=${CONTROLLER_NODE_IP};   check_para ${RABBIT_IP}
-            #CONTROLLER_NODE_IP=${CONTROLLER_NODE_IP}
             check_env 
             shell_env
             init
@@ -698,7 +696,6 @@ elif [[ "$2" = "quantum" ]]; then
             GLANCE_IP=${CONTROLLER_NODE_IP};   check_para ${GLANCE_IP}
             QUANTUM_IP=${CONTROLLER_NODE_IP};  check_para ${QUANTUM_IP}
             RABBIT_IP=${CONTROLLER_NODE_IP};   check_para ${RABBIT_IP}
-            #CONTROLLER_NODE_IP=${CONTROLLER_NODE_IP}
             check_env
             shell_env
             init
@@ -706,19 +703,19 @@ elif [[ "$2" = "quantum" ]]; then
             ;;
         create_network)
             if [[ "${HOST_IP}" ]]; then
-                NOVA_IP=${HOST_IP};            check_para ${NOVA_IP}
-                CINDER_IP=${HOST_IP};          check_para ${CINDER_IP}
-                DB_IP=${HOST_IP};              check_para ${DB_IP}
-                KEYSTONE_IP=${HOST_IP};        check_para ${KEYSTONE_IP}
-                GLANCE_IP=${HOST_IP};          check_para ${GLANCE_IP}
-                QUANTUM_IP=${HOST_IP};         check_para ${QUANTUM_IP}
+                NOVA_IP=${HOST_IP};                check_para ${NOVA_IP}
+                CINDER_IP=${HOST_IP};              check_para ${CINDER_IP}
+                DB_IP=${HOST_IP};                  check_para ${DB_IP}
+                KEYSTONE_IP=${HOST_IP};            check_para ${KEYSTONE_IP}
+                GLANCE_IP=${HOST_IP};              check_para ${GLANCE_IP}
+                QUANTUM_IP=${HOST_IP};             check_para ${QUANTUM_IP}
             elif [[ "${CONTROLLER_NODE_IP}" ]]; then
-                NOVA_IP=${CONTROLLER_NODE_IP};            check_para ${NOVA_IP}
-                CINDER_IP=${CONTROLLER_NODE_IP};          check_para ${CINDER_IP}
-                DB_IP=${CONTROLLER_NODE_IP};              check_para ${DB_IP}
-                KEYSTONE_IP=${CONTROLLER_NODE_IP};        check_para ${KEYSTONE_IP}
-                GLANCE_IP=${CONTROLLER_NODE_IP};          check_para ${GLANCE_IP}
-                QUANTUM_IP=${CONTROLLER_NODE_IP};         check_para ${QUANTUM_IP}
+                NOVA_IP=${CONTROLLER_NODE_IP};     check_para ${NOVA_IP}
+                CINDER_IP=${CONTROLLER_NODE_IP};   check_para ${CINDER_IP}
+                DB_IP=${CONTROLLER_NODE_IP};       check_para ${DB_IP}
+                KEYSTONE_IP=${CONTROLLER_NODE_IP}; check_para ${KEYSTONE_IP}
+                GLANCE_IP=${CONTROLLER_NODE_IP};   check_para ${GLANCE_IP}
+                QUANTUM_IP=${CONTROLLER_NODE_IP};  check_para ${QUANTUM_IP}
             else
                 print_syntax
             fi
