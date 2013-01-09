@@ -28,6 +28,9 @@ if [[ "$2" = "quantum" ]]; then
     source ./deploy_with_quantum.conf
 elif [[ "$2" = "nova-network" ]]; then
     source ./deploy_with_nova-network.conf
+else
+    echo "network type must be : quantum or nova-network."
+    exit 1
 fi
 
 # --------------------------------------------------------------------------------------
