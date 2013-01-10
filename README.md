@@ -90,6 +90,11 @@ How to use all in one node with quantum
 
 fig.1 all in one with quantum
 
+#### OS Install
+
+Please make disk partition such as /dev/sda6. Script make this disk partition
+to use by Cinder.
+
 #### Set up network interfaces
 
 Set up network configuration.
@@ -189,6 +194,11 @@ How to use 3 nodes (controller, network, compute) mode with quantum
     +-----------+
 
 fig.2 separated nodes with quantum
+
+#### OS Install
+
+Please make disk partition such as /dev/sda6 on Controller node. Script make this disk partition
+to use by Cinder.
 
 #### get script
 
@@ -336,6 +346,11 @@ How to use all in one mode with nova-network
 
 fig.3 all in one with nova-network
 
+#### OS Install
+
+Please make disk partition such as /dev/sda6. Script make this disk partition
+to use by Cinder.
+
 #### Set up network interfaces
 
 Set up your network configurations to use static ip address.
@@ -391,7 +406,7 @@ create fixed, floating range networks.
 That's done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
 with user : demo, pass : demo
 
-How to use 2 separated nodes (controller, compute) with nova-network
+How to use with 2 or more separated nodes (controller, compute) with nova-network
 ----
 
 #### Preconfigured Architecure
@@ -408,6 +423,10 @@ How to use 2 separated nodes (controller, compute) with nova-network
 
 fig.4 separated nodes with nova-network
 
+#### OS Install
+
+Please make disk partition such as /dev/sda6 on Controller node. Script make
+this disk partition to use by Cinder.
 
 #### Set up network interfaces
 
