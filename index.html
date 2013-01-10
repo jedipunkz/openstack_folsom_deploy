@@ -79,6 +79,17 @@ interface.</p>
 
 <p>And you need a disk device (such as /dev/sda6) for cinder service.</p>
 
+<h2>Require Environment with nova-network</h2>
+
+<p>If you choose nova-network, it is simple. You need 1 NIC only. And you need a
+disk device (such as /dev/sda6) for cinder service.</p>
+
+<h1>How to use with quantum</h1>
+
+<h2>How to use all in one node with quantum</h2>
+
+<h4>Preconfigured Architecture</h4>
+
 <pre><code>management segment 172.16.1.0/24
 +---------------------------------------------------------------------------------
 |
@@ -103,68 +114,10 @@ interface.</p>
 
 <p>fig.1 all in one with quantum</p>
 
-<pre><code>management segment 172.16.1.0/24
-+--------------------------------------------+------------------+-----------------
-|                                            |                  |
-|                                            |                  |
-| eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
-+------------+                               +-----------+      +------------+
-|            | eth1 ------------------- eth1 |           |      |            |
-|  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
-|    node    | data segment = 172.16.2.0/24  |   node    |      |    node    |
-+------------+ 172.16.2.13       172.16.2.12 +-----------+      +------------+
-| eth0 10.200.8.12                                              | eth0 10.200.8.11
-|                                                               |
-|                                                               |
-+--------------------------------------------+------------------+-----------------
-|       public segment 10.200.8.0/24
-|
-| 10.200.8.1
-+-----------+
-| GW Router |-&gt; The Internet
-+-----------+
-</code></pre>
+<h4>OS Install</h4>
 
-<p>fig.2 separated nodes with quantum</p>
-
-<h2>Require Environment with nova-network</h2>
-
-<p>If you choose nova-network, it is simple. You need 1 NIC only. And you need a
-disk device (such as /dev/sda6) for cinder service.</p>
-
-<pre><code>                                   +-----------+
-+----------------------------------| GW Router |-&gt; The Internet
-|10.200.8.11                       +-----------+
-|eth0
-+------------+
-|            |
-| all in one |
-|            |
-+------------+
-</code></pre>
-
-<p>fig.3 all in one with nova-network</p>
-
-<pre><code>                                   +-----------+
-+---------------+------------------| GW Router |-&gt; The Internet
-|10.200.8.11    |10.200.8.12       +-----------+
-|eth0           |eth0
-+------------+  +------------+
-|            |  |            |
-| controller |  |  compute   |
-|            |  |            |
-+------------+  +------------+
-</code></pre>
-
-<p>fig.4 separated nodes with nova-network</p>
-
-<h1>How to use with quantum</h1>
-
-<h2>How to use all in one node with quantum</h2>
-
-<h4>Preconfigured Architecture</h4>
-
-<p>fig.1</p>
+<p>Please make disk partition such as /dev/sda6. Script make this disk partition
+to use by Cinder.</p>
 
 <h4>Set up network interfaces</h4>
 
@@ -246,7 +199,34 @@ OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 
 <h4>Preconfigured Architecture</h4>
 
-<p>fig.2</p>
+<pre><code>management segment 172.16.1.0/24
++--------------------------------------------+------------------+-----------------
+|                                            |                  |
+|                                            |                  |
+| eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
++------------+                               +-----------+      +------------+
+|            | eth1 ------------------- eth1 |           |      |            |
+|  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
+|    node    | data segment = 172.16.2.0/24  |   node    |      |    node    |
++------------+ 172.16.2.13       172.16.2.12 +-----------+      +------------+
+| eth0 10.200.8.12                                              | eth0 10.200.8.11
+|                                                               |
+|                                                               |
++--------------------------------------------+------------------+-----------------
+|       public segment 10.200.8.0/24
+|
+| 10.200.8.1
++-----------+
+| GW Router |-&gt; The Internet
++-----------+
+</code></pre>
+
+<p>fig.2 separated nodes with quantum</p>
+
+<h4>OS Install</h4>
+
+<p>Please make disk partition such as /dev/sda6 on Controller node. Script make this disk partition
+to use by Cinder.</p>
 
 <h4>get script</h4>
 
@@ -387,7 +367,23 @@ browser with user: demo, pass: demo.</p>
 
 <h4>Preconfigured Architecure</h4>
 
-<p>fig.3</p>
+<pre><code>                                   +-----------+
++----------------------------------| GW Router |-&gt; The Internet
+|10.200.8.11                       +-----------+
+|eth0
++------------+
+|            |
+| all in one |
+|            |
++------------+
+</code></pre>
+
+<p>fig.3 all in one with nova-network</p>
+
+<h4>OS Install</h4>
+
+<p>Please make disk partition such as /dev/sda6. Script make this disk partition
+to use by Cinder.</p>
 
 <h4>Set up network interfaces</h4>
 
@@ -449,13 +445,29 @@ OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 <p>That's done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
 with user : demo, pass : demo</p>
 
-<h2>How to use 2 separated nodes (controller, compute) with nova-network</h2>
+<h2>How to use with 2 or more separated nodes (controller, compute) with nova-network</h2>
 
 <h4>Preconfigured Architecure</h4>
 
-<p>fig.4</p>
+<pre><code>                                   +-----------+
++---------------+------------------| GW Router |-&gt; The Internet
+|10.200.8.11    |10.200.8.12       +-----------+
+|eth0           |eth0
++------------+  +------------+
+|            |  |            |
+| controller |  |  compute   |
+|            |  |            |
++------------+  +------------+
+</code></pre>
 
-<p>Set up your network configurations to use static ip address.</p>
+<p>fig.4 separated nodes with nova-network</p>
+
+<h4>OS Install</h4>
+
+<p>Please make disk partition such as /dev/sda6 on Controller node. Script make
+this disk partition to use by Cinder.</p>
+
+<h4>Set up network interfaces</h4>
 
 <p>controller:/etc/network/interfaces</p>
 
@@ -485,11 +497,15 @@ iface eth0 inet static
         dns-nameservers 8.8.8.8 8.8.4.4
 </code></pre>
 
+<h4>Clone scripts</h4>
+
 <p>Clone this scripts to your target node.</p>
 
 <pre><code>controller% git clone https://github.com/jedipunkz/openstack_folsom_deploy.git
 controller% cd openstack_folsom_deploy
 </code></pre>
+
+<h4>Edit Parameters</h4>
 
 <p>Set up parameters of deploy_with_nova-network.conf.</p>
 
@@ -509,16 +525,22 @@ OS_IMAGE_URL="https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x8
 OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 </code></pre>
 
+<h4>Copy scripts</h4>
+
 <p>Copy these scripts to compute node.</p>
 
 <pre><code>controller% scp -r openstack_folsom_deploy ${COMPUTE_NODE_IP}:~/
 </code></pre>
+
+<h4>Run script</h4>
 
 <p>Run this scripts with nova-network option.</p>
 
 <pre><code>controller% sudo ./deploy.sh controller nova-network
 compute   % sudo ./deploy.sh compute nova-network
 </code></pre>
+
+<h4>Create netorks</h4>
 
 <p>at last, create network on controller node.</p>
 
