@@ -525,6 +525,11 @@ If you want to use floating ip, do these operation.
 	% quantum port-list
 	% quantum floatingip-associate <floatingip_id> <vm_port_id>
 
+Datail of each parameters
+----
+
+<https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_parameters.md>
+
 Versions and Changelog
 ----
 
@@ -537,3 +542,4 @@ Versions and Changelog
 Known Issue
 ----
 
+NONE
