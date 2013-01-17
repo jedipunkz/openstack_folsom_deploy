@@ -67,7 +67,6 @@ quantum は 4 つのネットワークを前提に設計されています。こ
 
 図は手順の中で説明していきます。
 
-
 nova-network を用いた前提構成
 ----
 
@@ -199,7 +198,7 @@ quantum を用いた分離構成の構築方法
     +--------------------------------------------+------------------+-----------------
     |                                            |                  |
     |                                            |                  |
-    | eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
+    | eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.16.1.11
     +------------+                               +-----------+      +------------+
     |            | eth1 ------------------- eth1 |           |      |            |
     |  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
@@ -567,6 +566,13 @@ Floating IP の利用
 	% quantum port-list
 	% quantum floatingip-associate <floatingip_id> <vm_port_id>
 
+その他、各パラメータの詳細
+----
+
+各パラメータの詳細については下記のドキュメントを参考にしてください。
+
+<https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_parameters_jp.md>
+
 バージョン履歴
 ----
 
@@ -579,3 +585,4 @@ Floating IP の利用
 Known Issue
 ----
 
+特になし

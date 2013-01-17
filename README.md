@@ -175,7 +175,7 @@ How to use 3 nodes (controller, network, compute) mode with quantum
     +--------------------------------------------+------------------+-----------------
     |                                            |                  |
     |                                            |                  |
-    | eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
+    | eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.16.1.11
     +------------+                               +-----------+      +------------+
     |            | eth1 ------------------- eth1 |           |      |            |
     |  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
@@ -507,6 +507,11 @@ If you want to use floating ip, do these operation.
 	% quantum port-list
 	% quantum floatingip-associate <floatingip_id> <vm_port_id>
 
+Datail of each parameters
+----
+
+<https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_parameters.md>
+
 Versions and Changelog
 ----
 
@@ -519,3 +524,4 @@ Versions and Changelog
 Known Issue
 ----
 
+NONE
