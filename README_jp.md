@@ -182,7 +182,6 @@ Ubuntu 12.04 もしくは 12.10 をインストールしてください。この
 スクリプトを実行してください。
 
 	% sudo ./deploy.sh allinone quantum # wait some minutes...
-    % sudo ./deploy.sh create_network quantum
 
 完成です。この URL (http://${HOST_IP}/horizon) にアクセスし
 
@@ -341,11 +340,6 @@ fig.1 の構成を前提にパラメータを修正しています。環境に�
     network   % sudo ./deploy.sh network quantum
     compute   % sudo ./deploy.sh compute quntum
     
-最後に quantum 上にネットワークを作るため下記の通りスクリプトを実行してくださ
-い。
-
-    controller% sudo ./deploy.sh create_network quntum
-
 完成です。http://${CONTROLLER_NODE_IP}/horizon にアクセスして操作を行なってく
 ださい。
 
@@ -430,13 +424,6 @@ Ubuntu 12.04 もしくは 12.10 をインストールしてください。この
 #### スクリプトの実行
 
     % sudo ./deploy.sh allinone nova-network
-
-#### ネットワークの作成
-
-create_network オプションを用いて nova-network に fixed range, floating range
-のネットワークを作ります。
-
-    % sudo ./deploy.sh create_network nova-network
 
 完成です。URL http://${HOST_IP}/horizon にアクセスして操作を行なってください。
 
@@ -535,12 +522,6 @@ Ubuntu 12.04 もしくは 12.10 をインストールしてください。この
 
     controller% sudo ./deploy.sh controller nova-network
     compute   % sudo ./deploy.sh compute nova-network
-
-#### ネットワークの作成
-
-最後に nova-network 上にネットワークを作成します。
-
-    controller% sudo ./deploy.sh create_network nova-network
 
 完成です。URL  http://${CONTROLLER_NODE_IP}/horizon にアクセスして操作を行なっ
 てください。

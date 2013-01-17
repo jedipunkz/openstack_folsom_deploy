@@ -161,7 +161,6 @@ Update these environment in deploy_with_quantum.conf
 Run this script.
 
 	% sudo ./deploy.sh allinone quantum # wait some minutes...
-    % sudo ./deploy.sh create_network quantum
 
 That's all and You've done :D
 
@@ -317,12 +316,6 @@ Deploy OpenStack for each compornent.
     network   % sudo ./deploy.sh network quantum
     compute   % sudo ./deploy.sh compute quntum
     
-#### Create network
-
-at last, create network on controller node.
-
-    controller% sudo ./deploy.sh create_network quntum
-
 You've done. Please access http://${CONTROLLER_NODE_IP}/horizon via your
 browser with user: demo, pass: demo.
 
@@ -397,13 +390,7 @@ Run this script with nova-network option.
 
     % sudo ./deploy.sh allinone nova-network
 
-#### Create network
-
-create fixed, floating range networks.
-
-    % sudo ./deploy.sh create_network nova-network
-
-That's done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
+You've done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
 with user : demo, pass : demo
 
 How to use with 2 or more separated nodes (controller, compute) with nova-network
@@ -494,11 +481,6 @@ Run this scripts with nova-network option.
 
     controller% sudo ./deploy.sh controller nova-network
     compute   % sudo ./deploy.sh compute nova-network
-
-#### Create netorks
-at last, create network on controller node.
-
-    controller% sudo ./deploy.sh create_network nova-network
 
 Now you can access to Horizon with this URL http://${CONTROLLER_NODE_IP}/horizon
 
