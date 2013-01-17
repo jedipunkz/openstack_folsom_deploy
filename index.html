@@ -188,7 +188,6 @@ OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 <p>Run this script.</p>
 
 <pre><code>% sudo ./deploy.sh allinone quantum # wait some minutes...
-% sudo ./deploy.sh create_network quantum
 </code></pre>
 
 <p>That's all and You've done :D</p>
@@ -203,7 +202,7 @@ OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 +--------------------------------------------+------------------+-----------------
 |                                            |                  |
 |                                            |                  |
-| eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.24.1.11
+| eth2 172.16.1.12                           | eth2 172.16.1.13 | eth2 172.16.1.11
 +------------+                               +-----------+      +------------+
 |            | eth1 ------------------- eth1 |           |      |            |
 |  network   | vlan/gre seg = 172.24.17.0/24 |  compute  |      | controller |
@@ -351,13 +350,6 @@ network   % sudo ./deploy.sh network quantum
 compute   % sudo ./deploy.sh compute quntum
 </code></pre>
 
-<h4>Create network</h4>
-
-<p>at last, create network on controller node.</p>
-
-<pre><code>controller% sudo ./deploy.sh create_network quntum
-</code></pre>
-
 <p>You've done. Please access http://${CONTROLLER_NODE_IP}/horizon via your
 browser with user: demo, pass: demo.</p>
 
@@ -435,14 +427,7 @@ OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 <pre><code>% sudo ./deploy.sh allinone nova-network
 </code></pre>
 
-<h4>Create network</h4>
-
-<p>create fixed, floating range networks.</p>
-
-<pre><code>% sudo ./deploy.sh create_network nova-network
-</code></pre>
-
-<p>That's done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
+<p>You've done. Now you can access to Horizon with URL (http://${HOST_IP}/horizon).
 with user : demo, pass : demo</p>
 
 <h2>How to use with 2 or more separated nodes (controller, compute) with nova-network</h2>
@@ -540,13 +525,6 @@ OS_IMAGE_NAME="Cirros 0.3.0 x86_64"
 compute   % sudo ./deploy.sh compute nova-network
 </code></pre>
 
-<h4>Create netorks</h4>
-
-<p>at last, create network on controller node.</p>
-
-<pre><code>controller% sudo ./deploy.sh create_network nova-network
-</code></pre>
-
 <p>Now you can access to Horizon with this URL http://${CONTROLLER_NODE_IP}/horizon</p>
 
 <h2>Using Metadata server with quantum</h2>
@@ -572,6 +550,10 @@ controller% route add -net 172.24.17.0/24 gw &lt;route_if_addr&gt;
 % quantum floatingip-associate &lt;floatingip_id&gt; &lt;vm_port_id&gt;
 </code></pre>
 
+<h2>Datail of each parameters</h2>
+
+<p><a href="https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_parameters.md">https://github.com/jedipunkz/openstack_folsom_deploy/blob/master/README_parameters.md</a></p>
+
 <h2>Versions and Changelog</h2>
 
 <ul>
@@ -581,6 +563,8 @@ controller% route add -net 172.24.17.0/24 gw &lt;route_if_addr&gt;
 <li>2012/12/07 : version 0.4 : Fixed a problem that can not access metadata server from VMs.</li>
 <li>2013/01/09 : version 0.5 : support nova-network</li>
 </ul><h2>Known Issue</h2>
+
+<p>NONE</p>
         </section>
 
         <footer>
