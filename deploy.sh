@@ -513,6 +513,9 @@ function compute_nova_setup() {
 function cinder_setup() {
     # install packages
     install_package cinder-api cinder-scheduler cinder-volume iscsitarget open-iscsi iscsitarget-dkms
+    sed -i 's/false/true/g' /etc/default/iscsitarget
+    service iscsitarget start
+    service open-iscsi start
     # create databases
     mysql -uroot -p${MYSQL_PASS} -e "CREATE DATABASE cinder;"
     mysql -uroot -p${MYSQL_PASS} -e "GRANT ALL ON cinder.* TO 'cinderUser'@'%' IDENTIFIED BY 'cinderPass';"
@@ -546,8 +549,24 @@ function horizon_setup() {
 #  make seciruty group rule named 'default' to allow SSH and ICMP traffic
 # --------------------------------------------------------------------------------------
 function scgroup_allow() {
+    # turn on demo user
+    export SERVICE_TOKEN=admin
+    export OS_TENANT_NAME=service
+    export OS_USERNAME=demo
+    export OS_PASSWORD=demo
+    export OS_AUTH_URL="http://${KEYSTONE_IP}:5000/v2.0/"
+    export SERVICE_ENDPOINT="http://${KEYSTONE_IP}:35357/v2.0"
+
     nova --no-cache secgroup-add-rule default tcp 22 22 0.0.0.0/0
     nova --no-cache secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+
+    # turn back to admin user
+    export SERVICE_TOKEN=admin
+    export OS_TENANT_NAME=admin
+    export OS_USERNAME=admin
+    export OS_PASSWORD=admin
+    export OS_AUTH_URL="http://${KEYSTONE_IP}:5000/v2.0/"
+    export SERVICE_ENDPOINT="http://${KEYSTONE_IP}:35357/v2.0"
 }
 
 # --------------------------------------------------------------------------------------
@@ -573,6 +592,8 @@ if [[ "$2" = "nova-network" ]]; then
             cinder_setup
             horizon_setup
             scgroup_allow
+            create_network
+            echo "Setup for all in one node has done.:D"
             ;;
         controller)
             NOVA_IP=${CONTROLLER_NODE_IP};     check_para ${NOVA_IP}
@@ -592,6 +613,7 @@ if [[ "$2" = "nova-network" ]]; then
             cinder_setup
             horizon_setup
             scgroup_allow
+            echo "Setup for controller node has done.:D"
             ;;
         compute)
             NOVA_IP=${CONTROLLER_NODE_IP};     check_para ${NOVA_IP}
@@ -605,6 +627,8 @@ if [[ "$2" = "nova-network" ]]; then
             shell_env
             init
             compute_nova_setup_nova-network
+            create_network
+            echo "Setup for compute node has done.:D"
             ;;
         create_network)
             if [[ "${HOST_IP}" ]]; then
@@ -656,6 +680,8 @@ elif [[ "$2" = "quantum" ]]; then
             cinder_setup
             horizon_setup
             scgroup_allow
+            create_network
+            echo "Setup for all in one node has done.:D"
             ;;
         controller)
             NOVA_IP=${CONTROLLER_NODE_IP};     check_para ${NOVA_IP}
@@ -676,6 +702,7 @@ elif [[ "$2" = "quantum" ]]; then
             cinder_setup
             horizon_setup
             scgroup_allow
+            echo "Setup for controller node has done.:D"
             ;;
         network)
             NOVA_IP=${CONTROLLER_NODE_IP};     check_para ${NOVA_IP}
@@ -690,6 +717,8 @@ elif [[ "$2" = "quantum" ]]; then
             init
             openvswitch_setup
             network_quantum_setup
+            create_network
+            echo "Setup for network node has done.:D"
             ;;
         compute)
             NOVA_IP=${CONTROLLER_NODE_IP};     check_para ${NOVA_IP}
@@ -703,6 +732,7 @@ elif [[ "$2" = "quantum" ]]; then
             shell_env
             init
             compute_nova_setup
+            echo "Setup for compute node has done.:D"
             ;;
         create_network)
             if [[ "${HOST_IP}" ]]; then
