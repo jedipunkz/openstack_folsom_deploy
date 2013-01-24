@@ -592,7 +592,7 @@ if [[ "$2" = "nova-network" ]]; then
             cinder_setup
             horizon_setup
             scgroup_allow
-            create_network
+            create_network_nova-network
             echo "Setup for all in one node has done.:D"
             ;;
         controller)
@@ -627,7 +627,7 @@ if [[ "$2" = "nova-network" ]]; then
             shell_env
             init
             compute_nova_setup_nova-network
-            create_network
+            create_network_nova-network
             echo "Setup for compute node has done.:D"
             ;;
         create_network)
