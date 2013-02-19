@@ -519,7 +519,8 @@ Versions and Changelog
 * 2012/11/08 : version 0.2 : Supported VLAN mode of quantum.
 * 2012/12/03 : version 0.3 : Supported 3 nodes constitution (controller, network, compute nodes)
 * 2012/12/07 : version 0.4 : Fixed a problem that can not access metadata server from VMs.
-* 2013/01/09 : version 0.5 : support nova-network
+* 2013/01/09 : version 0.5 : supported nova-network
+* 2013/01/17 : version 0.6 : fixed cinder problem. and make you do not need to exec create_network.
 
 Known Issue
 ----
