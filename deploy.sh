@@ -183,13 +183,24 @@ function keystone_setup() {
     fi
     
     # Creating Endpoints
-    keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_EC2 --publicurl "http://${NOVA_IP}:8773/services/Cloud" --adminurl "http://${NOVA_IP}:8773/services/Admin" --internalurl "http://${NOVA_IP}:8773/services/Cloud"
-    keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_IDENTITY --publicurl "http://${KEYSTONE_IP}:5000/v2.0" --adminurl "http://${KEYSTONE_IP}:35357/v2.0" --internalurl "http://${KEYSTONE_IP}:5000/v2.0"
-    keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_VOLUME --publicurl "http://${NOVA_IP}:8776/v1/\$(tenant_id)s" --adminurl "http://${NOVA_IP}:8776/v1/\$(tenant_id)s" --internalurl "http://${NOVA_IP}:8776/v1/\$(tenant_id)s"
-    keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_IMAGE --publicurl "http://${GLANCE_IP}:9292/v2" --adminurl "http://${GLANCE_IP}:9292/v2" --internalurl "http://${GLANCE_IP}:9292/v2"
-    keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_COMPUTE --publicurl "http://${NOVA_IP}:8774/v2/\$(tenant_id)s" --adminurl "http://${NOVA_IP}:8774/v2/\$(tenant_id)s" --internalurl "http://${NOVA_IP}:8774/v2/\$(tenant_id)s"
-    if [[ "$1" = "quantum" ]]; then
-        keystone endpoint-create --region myregion --service-id $SERVICE_LIST_ID_NETWORK --publicurl "http://${QUANTUM_IP}:9696/" --adminurl "http://${QUANTUM_IP}:9696/" --internalurl "http://${QUANTUM_IP}:9696/"
+    if [[ "$2" = "controller" ]]; then
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_EC2 --publicurl "http://${KEYSTONE_PUB_IP}:8773/services/Cloud" --adminurl "http://${KEYSTONE_IP}:8773/services/Admin" --internalurl "http://${KEYSTONE_IP}:8773/services/Cloud"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_IDENTITY --publicurl "http://${KEYSTONE_PUB_IP}:5000/v2.0" --adminurl "http://${KEYSTONE_IP}:35357/v2.0" --internalurl "http://${KEYSTONE_IP}:5000/v2.0"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_VOLUME --publicurl "http://${KEYSTONE_PUB_IP}:8776/v1/\$(tenant_id)s" --adminurl "http://${KEYSTONE_IP}:8776/v1/\$(tenant_id)s" --internalurl "http://${KEYSTONE_IP}:8776/v1/\$(tenant_id)s"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_IMAGE --publicurl "http://${KEYSTONE_PUB_IP}:9292/v2" --adminurl "http://${KEYSTONE_IP}:9292/v2" --internalurl "http://${KEYSTONE_IP}:9292/v2"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_COMPUTE --publicurl "http://${KEYSTONE_PUB_IP}:8774/v2/\$(tenant_id)s" --adminurl "http://${KEYSTONE_IP}:8774/v2/\$(tenant_id)s" --internalurl "http://${KEYSTONE_IP}:8774/v2/\$(tenant_id)s"
+        if [[ "$1" = "quantum" ]]; then
+            keystone endpoint-create --region myregion --service-id $SERVICE_LIST_ID_NETWORK --publicurl "http://${KEYSTONE_PUB_IP}:9696/" --adminurl "http://${KEYSTONE_IP}:9696/" --internalurl "http://${KEYSTONE_IP}:9696/"
+        fi
+    else
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_EC2 --publicurl "http://${KEYSTONE_IP}:8773/services/Cloud" --adminurl "http://${KEYSTONE_IP}:8773/services/Admin" --internalurl "http://${KEYSTONE_IP}:8773/services/Cloud"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_IDENTITY --publicurl "http://${KEYSTONE_IP}:5000/v2.0" --adminurl "http://${KEYSTONE_IP}:35357/v2.0" --internalurl "http://${KEYSTONE_IP}:5000/v2.0"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_VOLUME --publicurl "http://${KEYSTONE_IP}:8776/v1/\$(tenant_id)s" --adminurl "http://${KEYSTONE_IP}:8776/v1/\$(tenant_id)s" --internalurl "http://${KEYSTONE_IP}:8776/v1/\$(tenant_id)s"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_IMAGE --publicurl "http://${KEYSTONE_IP}:9292/v2" --adminurl "http://${KEYSTONE_IP}:9292/v2" --internalurl "http://${KEYSTONE_IP}:9292/v2"
+        keystone endpoint-create --region myregion --service_id $SERVICE_LIST_ID_COMPUTE --publicurl "http://${KEYSTONE_IP}:8774/v2/\$(tenant_id)s" --adminurl "http://${KEYSTONE_IP}:8774/v2/\$(tenant_id)s" --internalurl "http://${KEYSTONE_IP}:8774/v2/\$(tenant_id)s"
+        if [[ "$1" = "quantum" ]]; then
+            keystone endpoint-create --region myregion --service-id $SERVICE_LIST_ID_NETWORK --publicurl "http://${KEYSTONE_IP}:9696/" --adminurl "http://${KEYSTONE_IP}:9696/" --internalurl "http://${KEYSTONE_IP}:9696/"
+        fi
     fi
 }
 
@@ -660,14 +671,15 @@ if [[ "$2" = "nova-network" ]]; then
 elif [[ "$2" = "quantum" ]]; then
     case "$1" in
         allinone)
-            NOVA_IP=${HOST_IP};     check_para ${NOVA_IP}
-            CINDER_IP=${HOST_IP};   check_para ${CINDER_IP}
-            DB_IP=${HOST_IP};       check_para ${DB_IP}
-            KEYSTONE_IP=${HOST_IP}; check_para ${KEYSTONE_IP}
-            GLANCE_IP=${HOST_IP};   check_para ${GLANCE_IP}
-            QUANTUM_IP=${HOST_IP};  check_para ${QUANTUM_IP}
-            RABBIT_IP=${HOST_IP};   check_para ${RABBIT_IP}
-            CONTROLLER_NODE_PUB_IP=${HOST_PUB_IP}; check_para ${CONTROLLER_NODE_PUB_IP}
+            NOVA_IP=${HOST_IP};                     check_para ${NOVA_IP}
+            CINDER_IP=${HOST_IP};                   check_para ${CINDER_IP}
+            DB_IP=${HOST_IP};                       check_para ${DB_IP}
+            KEYSTONE_IP=${HOST_IP};                 check_para ${KEYSTONE_IP}
+            GLANCE_IP=${HOST_IP};                   check_para ${GLANCE_IP}
+            QUANTUM_IP=${HOST_IP};                  check_para ${QUANTUM_IP}
+            RABBIT_IP=${HOST_IP};                   check_para ${RABBIT_IP}
+            CONTROLLER_NODE_PUB_IP=${HOST_PUB_IP};  check_para ${CONTROLLER_NODE_PUB_IP}
+            KEYSTONE_PUB_IP=${HOST_PUB_IP};         check_para ${KEYSTONE_PUB_IP}
             check_env 
             shell_env
             init
@@ -684,18 +696,19 @@ elif [[ "$2" = "quantum" ]]; then
             echo "Setup for all in one node has done.:D"
             ;;
         controller)
-            NOVA_IP=${CONTROLLER_NODE_IP};     check_para ${NOVA_IP}
-            CINDER_IP=${CONTROLLER_NODE_IP};   check_para ${CINDER_IP}
-            DB_IP=${CONTROLLER_NODE_IP};       check_para ${DB_IP}
-            KEYSTONE_IP=${CONTROLLER_NODE_IP}; check_para ${KEYSTONE_IP}
-            GLANCE_IP=${CONTROLLER_NODE_IP};   check_para ${GLANCE_IP}
-            QUANTUM_IP=${CONTROLLER_NODE_IP};  check_para ${QUANTUM_IP}
-            RABBIT_IP=${CONTROLLER_NODE_IP};   check_para ${RABBIT_IP}
+            NOVA_IP=${CONTROLLER_NODE_IP};              check_para ${NOVA_IP}
+            CINDER_IP=${CONTROLLER_NODE_IP};            check_para ${CINDER_IP}
+            DB_IP=${CONTROLLER_NODE_IP};                check_para ${DB_IP}
+            KEYSTONE_IP=${CONTROLLER_NODE_IP};          check_para ${KEYSTONE_IP}
+            GLANCE_IP=${CONTROLLER_NODE_IP};            check_para ${GLANCE_IP}
+            QUANTUM_IP=${CONTROLLER_NODE_IP};           check_para ${QUANTUM_IP}
+            RABBIT_IP=${CONTROLLER_NODE_IP};            check_para ${RABBIT_IP}
+            KEYSTONE_PUB_IP=${CONTROLLER_NODE_PUB_IP};  check_para ${KEYSTONE_PUB_IP}
             check_env 
             shell_env
             init
             mysql_setup
-            keystone_setup quantum
+            keystone_setup quantum controller
             glance_setup
             controller_quantum_setup
             controller_nova_setup
