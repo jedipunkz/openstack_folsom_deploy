@@ -255,6 +255,7 @@ Controller Node's /etc/network/interfaces
     iface eth0 inet static
         address 10.200.8.11
         netmask 255.255.255.0
+        gateway 10.200.8.1
         dns-nameservers 8.8.8.8 8.8.4.4
         dns-search cpi.ad.jp
     
@@ -262,7 +263,6 @@ Controller Node's /etc/network/interfaces
     iface eth2 inet static
         address 172.16.1.11
         netmask 255.255.255.0
-        gateway 172.16.1.1
 
 Network Node's /etc/network/interfaces
 
@@ -316,7 +316,7 @@ Deploy OpenStack for each compornent.
     network   % sudo ./deploy.sh network quantum
     compute   % sudo ./deploy.sh compute quntum
     
-You've done. Please access http://${CONTROLLER_NODE_IP}/horizon via your
+You've done. Please access http://${CONTROLLER_NODE_PUB_IP}/horizon via your
 browser with user: demo, pass: demo.
 
 How to use with nova-network

@@ -277,6 +277,7 @@ fig.1 の構成を前提にパラメータを修正しています。環境に�
     iface eth0 inet static
         address 10.200.8.11
         netmask 255.255.255.0
+        gateway 10.200.8.1
         dns-nameservers 8.8.8.8 8.8.4.4
         dns-search cpi.ad.jp
     
@@ -284,7 +285,6 @@ fig.1 の構成を前提にパラメータを修正しています。環境に�
     iface eth2 inet static
         address 172.16.1.11
         netmask 255.255.255.0
-        gateway 172.16.1.1
 
 ネットワークノードは...
 
@@ -339,7 +339,7 @@ fig.1 の構成を前提にパラメータを修正しています。環境に�
     network   % sudo ./deploy.sh network quantum
     compute   % sudo ./deploy.sh compute quntum
     
-完成です。http://${CONTROLLER_NODE_IP}/horizon にアクセスして操作を行なってく
+完成です。http://${CONTROLLER_NODE_PUB_IP}/horizon にアクセスして操作を行なってく
 ださい。
 
 * ユーザ : demo

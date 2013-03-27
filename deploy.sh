@@ -465,7 +465,7 @@ function controller_nova_setup() {
     
     # set configuration files for nova
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_NODE_IP>#127.0.0.1#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${CONTROLLER_NODE_PUB_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_NODE_IP>#${CONTROLLER_NODE_PUB_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
     
     chown -R nova. /etc/nova
     chmod 644 /etc/nova/nova.conf
@@ -506,7 +506,7 @@ function compute_nova_setup() {
     # nova setup
     install_package nova-api-metadata nova-compute-kvm
     sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" $BASE_DIR/conf/etc.nova/api-paste.ini > /etc/nova/api-paste.ini
-    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${NOVA_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_NODE_IP>#${COMPUTE_NODE_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
+    sed -e "s#<KEYSTONE_IP>#${KEYSTONE_IP}#" -e "s#<NOVA_IP>#${CONTROLLER_NODE_PUB_IP}#" -e "s#<GLANCE_IP>#${GLANCE_IP}#" -e "s#<QUANTUM_IP>#${QUANTUM_IP}#" -e "s#<DB_IP>#${DB_IP}#" -e "s#<COMPUTE_NODE_IP>#${COMPUTE_NODE_IP}#" $BASE_DIR/conf/etc.nova/nova.conf > /etc/nova/nova.conf
     cp $BASE_DIR/conf/etc.nova/nova-compute.conf /etc/nova/nova-compute.conf
     
     chown -R nova. /etc/nova
